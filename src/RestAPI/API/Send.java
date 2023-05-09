@@ -86,7 +86,7 @@ public class Send
                 this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 UILogger.log_int(response.statusCode());
                 UILogger.log_string(response.body());
-                challenge.game.rest.GameKey gameAction = jsonMapper.readValue(response.body(), challenge.game.rest.GameKey.class);
+                //challenge.game.rest.GameKey gameAction = jsonMapper.readValue(response.body(), challenge.game.rest.GameKey.class);
             test= "asd";
         } catch (IOException e)
         {
@@ -108,12 +108,14 @@ public class Send
             String test= json;
             client = newHttpClient();
             request = HttpRequest.newBuilder().uri(URI.create(this.BaseURL)).header("accept", "*/*").header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(json)).build();
-            client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response ->
+            /*client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response ->
             {
                 System.out.println(response.statusCode());
                 return response;
-            }).thenApply(HttpResponse::body).thenAccept(System.out::println);
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            }).thenApply(HttpResponse::body).thenAccept(System.out::println);*/
+            this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            UILogger.log_int(response.statusCode());
+            UILogger.log_string(response.body());
 
         } catch (IOException e)
         {
