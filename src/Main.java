@@ -1,36 +1,16 @@
 import RestAPI.API.Send;
 import RestAPI.Model.Parameter;
 import RestAPI.Properties.Config;
-import challenge.game.model.Game;
-import challenge.game.rest.GameConfig;
-import challenge.game.rest.GameCreated;
+import Utils.UILogger;
 import challenge.game.rest.GameKey;
-import challenge.game.rest.GameType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.http.HttpRequest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,11 +18,19 @@ public class Main
 {
     ObjectMapper mapper = new ObjectMapper();
     private JsonMapper jsonMapper= new JsonMapper();
-    ;
-    private javax.swing.JPanel JPanel;
     private JButton createGameKeyButton;
     private JButton createGameButton;
     private JTextField GameKeytextField;
+    private JTextArea logTextArea;
+    private JTable table1;
+    private JPanel container;
+    private JTabbedPane tabbedPane;
+    private JPanel outer_container;
+    private JPanel inner_container;
+    private JScrollPane tableContainer;
+    private JLabel heartbeat;
+
+    private UILogger logger = new UILogger();
 
     public Main()
     {
@@ -64,6 +52,8 @@ public class Main
                     Send send = new Send(Parameters,conf.GetProperty("BaseURL").toString());
 
                     send.GetGameKey();
+
+
                     /*Thread t = new Thread(send);
                     t.start();
 
@@ -75,6 +65,7 @@ public class Main
                         GameKey game = jsonMapper.readValue(send.response.body().toString(), GameKey.class);
                         GameKeytextField.setText(game.getKey());
                     }
+
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 } catch (InterruptedException ex) {
@@ -194,16 +185,27 @@ public class Main
                 }
             }
         });
-
     }
     public static void main(String[] args)
     {
+        Main main = new Main();
+        main.heartbeat.setFont(new Font("Arial Unicode MS", Font.PLAIN, 14));
+
         JFrame frame = new JFrame("App");
-        frame.setContentPane(new Main().JPanel);
+        frame.setContentPane(main.tabbedPane);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         frame.pack();
         frame.setSize(1000,1000);
         frame.setVisible(true);
+
+        Timer logger_heartbeat = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                main.logger.log(main.logTextArea, main.heartbeat);
+            }
+        });
+
+        logger_heartbeat.start();
     }
 }

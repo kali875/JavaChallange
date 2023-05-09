@@ -3,6 +3,7 @@ package RestAPI.API;
 import RestAPI.Authentication.Authentication;
 import RestAPI.Model.Parameter;
 import RestAPI.Properties.Config;
+import Utils.UILogger;
 import challenge.game.rest.GameConfig;
 import challenge.game.rest.GameType;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -23,8 +24,6 @@ import java.util.List;
 
 import static java.net.http.HttpClient.newBuilder;
 import static java.net.http.HttpClient.newHttpClient;
-
-
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -85,6 +84,8 @@ public class Send
                     return response;
                 }).thenApply(HttpResponse::body).thenAccept(System.out::println);*/
                 this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                UILogger.log_int(response.statusCode());
+                UILogger.log_string(response.body());
                 challenge.game.rest.GameKey gameAction = jsonMapper.readValue(response.body(), challenge.game.rest.GameKey.class);
             test= "asd";
         } catch (IOException e)
