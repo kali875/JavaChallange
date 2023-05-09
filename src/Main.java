@@ -38,7 +38,9 @@ public class Main
     private JScrollPane tableContainer;
     private JLabel heartbeat;
     private JButton websocketButton;
+    private JButton startGameButton;
     private GameID gameID;
+    private GameKey game;
 
     private UILogger logger = new UILogger();
 
@@ -72,7 +74,7 @@ public class Main
                     if(send.response != null)//responsecode == 200
                     {
                         String bodystring = send.response.body().toString();
-                        GameKey game = jsonMapper.readValue(send.response.body().toString(), GameKey.class);
+                        game = jsonMapper.readValue(send.response.body().toString(), GameKey.class);
                         GameKeytextField.setText(game.getKey());
                     }
 
@@ -205,7 +207,7 @@ public class Main
             public void actionPerformed(ActionEvent e) {
                 try {
                     // ws://javachallenge.loxon.eu:8081/game?gameId=340bbe66-b1ab-4469-8b07-5bad3e022fb5&gameKey=cb5bc49e-3029-470b-b863-eb56bf6ad8cc&connectionType=visualization
-                    String websocket_uri_string = "ws://javachallenge.loxon.eu:8081/game?gameId=" + gameID.getGameId() + "&gameKey=" + GameKeytextField.getText() + "&connectionType=visualization";
+                    String websocket_uri_string = "ws://javachallenge.loxon.eu:8081/game?gameId=" + gameID.getGameId() + "&gameKey=" + GameKeytextField.getText() + "&connectionType=control";
                     UILogger.log_string("Websocket URI was created:\n" + websocket_uri_string);
                     URI websocket_uri = null;
                     websocket_uri = new URI(websocket_uri_string);
@@ -218,6 +220,18 @@ public class Main
                     throw new RuntimeException(ex);
                 }
 
+            }
+        });
+
+        startGameButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    Send send = new Send("http://javachallenge.loxon.eu:8081/game/start/" + gameID.getGameId() + "/" + game.getKey(), "");
+                    send.startGame();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
     }

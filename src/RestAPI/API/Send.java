@@ -69,6 +69,7 @@ public class Send
         this.GameKey = GameKey;
         this.BaseURL = BaseURL;
     }
+
     public void GetGameKey()
     {
         try
@@ -125,6 +126,16 @@ public class Send
             throw new RuntimeException(e);
         }
     }
+
+    public void startGame() throws URISyntaxException, IOException, InterruptedException {
+        BaseURL = BaseURL;
+        client = newHttpClient();
+        request = HttpRequest.newBuilder().uri(URI.create(this.BaseURL)).header("accept", "*/*").header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString("")).build();
+        this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        UILogger.log_int(response.statusCode());
+        UILogger.log_string(response.body());
+    }
+
     public void CreateGame2(String json)
     {
         try {
