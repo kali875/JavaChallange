@@ -1,16 +1,24 @@
 import RestAPI.API.Send;
 import RestAPI.Model.Parameter;
 import RestAPI.Properties.Config;
+import RestAPI.Response.GameID;
 import Utils.UILogger;
+import WebSocket.WebSocketCommunication;
 import challenge.game.rest.GameKey;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import javax.swing.*;
+import javax.websocket.DeploymentException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +37,8 @@ public class Main
     private JPanel inner_container;
     private JScrollPane tableContainer;
     private JLabel heartbeat;
+    private JButton websocketButton;
+    private GameID gameID;
 
     private UILogger logger = new UILogger();
 
@@ -176,6 +186,10 @@ public class Main
                     HttpEntity responseEntity = responseBody.getEntity();
                     String responseString = EntityUtils.toString(responseEntity, "UTF-8");
                     String asd= null;*/
+
+                    if(send.response != null) {
+                        gameID = jsonMapper.readValue(send.response.body(), GameID.class);
+                    }
                 } catch (IOException ex)
                 {
 
@@ -183,6 +197,27 @@ public class Main
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
+            }
+        });
+
+        websocketButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    // ws://javachallenge.loxon.eu:8081/game?gameId=340bbe66-b1ab-4469-8b07-5bad3e022fb5&gameKey=cb5bc49e-3029-470b-b863-eb56bf6ad8cc&connectionType=visualization
+                    String websocket_uri_string = "ws://javachallenge.loxon.eu:8081/game?gameId=" + gameID.getGameId() + "&gameKey=" + GameKeytextField.getText() + "&connectionType=visualization";
+                    UILogger.log_string("Websocket URI was created:\n" + websocket_uri_string);
+                    URI websocket_uri = null;
+                    websocket_uri = new URI(websocket_uri_string);
+                    WebSocketCommunication.connect(websocket_uri);
+                } catch (URISyntaxException ex) {
+                    throw new RuntimeException(ex);
+                } catch (DeploymentException ex) {
+                    throw new RuntimeException(ex);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+
             }
         });
     }
@@ -193,6 +228,20 @@ public class Main
 
         JFrame frame = new JFrame("App");
         frame.setContentPane(main.tabbedPane);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                FileWriter writer = null;
+                try {
+                    writer = new FileWriter("log.txt");
+                    writer.write(main.logTextArea.getText());
+                    writer.close();
+                } catch (IOException ex) {
+                    System.out.println("Couldn't write data to the log file");
+                }
+                super.windowClosing(e);
+            }
+        });
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         frame.pack();
