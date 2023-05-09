@@ -78,12 +78,13 @@ public class Send
             client = newHttpClient();
                 test = BaseURL;
                 request = HttpRequest.newBuilder().uri(URI.create(conf.GetProperty("BaseURL").toString()+URL)).GET().build();
-                client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response ->
+/*                client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response ->
                 {
+                    this.response = response;
                     System.out.println(response.statusCode());
                     return response;
-                }).thenApply(HttpResponse::body).thenAccept(System.out::println);
-                response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                }).thenApply(HttpResponse::body).thenAccept(System.out::println);*/
+                this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 challenge.game.rest.GameKey gameAction = jsonMapper.readValue(response.body(), challenge.game.rest.GameKey.class);
             test= "asd";
         } catch (IOException e)
