@@ -1,4 +1,6 @@
 package Bot;
 
-public class EnemyDataAnalysis {
+public class EnemyDataAnalysis
+{
+
 }

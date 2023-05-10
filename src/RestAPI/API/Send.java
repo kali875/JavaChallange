@@ -4,6 +4,7 @@ import RestAPI.Authentication.Authentication;
 import RestAPI.Model.Parameter;
 import RestAPI.Properties.Config;
 import Utils.UILogger;
+import challenge.game.model.Game;
 import challenge.game.rest.GameConfig;
 import challenge.game.rest.GameType;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -104,7 +105,7 @@ public class Send
             //{"gameConfig": {"bots": [0],"gameType": "SINGLE_PLAYER"},"gameId": "string"}
             //{"gameId":"96e8ae54-1f15-43ac-a55a-f30d33d1ee6e","gameConfig":{"gameType":"SINGLE_PLAYER","bots":[0]}}
             //"{ \"bots\": [ 0 ], \"gameType\": \"SINGLE_PLAYER\"}"
-            json = "{\"bots\": [1],\"gameType\": \"SINGLE_PLAYER\"}";
+            json = "{\"bots\": [5],\"gameType\": \"SINGLE_PLAYER\"}";
             //json = "{gameConfig: {bots: [0],gameType: SINGLE_PLAYER}";
             String test= json;
             client = newHttpClient();
@@ -132,6 +133,17 @@ public class Send
         client = newHttpClient();
         request = HttpRequest.newBuilder().uri(URI.create(this.BaseURL)).header("accept", "*/*").header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString("")).build();
         this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+
+        UILogger.log_int(response.statusCode());
+        UILogger.log_string(response.body());
+    }
+    public void stopGame() throws URISyntaxException, IOException, InterruptedException {
+        BaseURL = BaseURL;
+        client = newHttpClient();
+        request = HttpRequest.newBuilder().uri(URI.create(this.BaseURL)).header("accept", "*/*").header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString("")).build();
+        this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        Game game = jsonMapper.readValue(response.body(), Game.class);
         UILogger.log_int(response.statusCode());
         UILogger.log_string(response.body());
     }

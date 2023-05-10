@@ -1,3 +1,4 @@
+import Bot.Controll;
 import RestAPI.API.Send;
 import RestAPI.Model.Parameter;
 import RestAPI.Properties.Config;
@@ -30,20 +31,21 @@ public class Main
     private JButton createGameButton;
     private JTextField GameKeytextField;
     private JTextArea logTextArea;
-    private JTable table1;
     private JPanel container;
     private JTabbedPane tabbedPane;
     private JPanel outer_container;
     private JPanel inner_container;
-    private JScrollPane tableContainer;
     private JLabel heartbeat;
     private JButton websocketButton;
     private JButton startGameButton;
+    private JPanel GamePlace;
+    private JButton stopGameButton;
     private GameID gameID;
     private GameKey game;
 
     private UILogger logger = new UILogger();
 
+    private Controll controll = new Controll();
     public Main()
     {
         //{"httpStatusCode":200,"key":"229c4353-b059-4204-8673-dc65ed0ef0cd","message":"The game key has been successfully generated."}
@@ -98,97 +100,10 @@ public class Main
                 {
                     Config conf = null;
                     conf = new Config();
-                    /*List<Parameter> Parameters = new ArrayList<Parameter>();
-                    Config conf = null;
-                    conf = new Config();
 
-                    String Test = conf.GetProperty("CreateGame").toString()+GameKeytextField.getText();
-                    Send send = new Send(conf.GetProperty("CreateGame").toString(),GameKeytextField.getText());
-
-                    Thread t = new Thread(send);
-                    t.start();
-
-                    t.join();
-                    if(send.response != null)//responsecode == 200
-                    {
-                        String bodystring = send.response.body().toString();
-                        Game game = jsonMapper.readValue(send.response.body().toString(), Game.class);
-                        //GameKeytextField.setText(game.getKey());
-                    }*/
-
-                    /*GameConfig gametype = new GameConfig();
-
-                    List<Integer> bots = new ArrayList<>();
-                    bots.add(1);
-                    gametype.setGameType(GameType.SINGLE_PLAYER);
-                    gametype.setBots(bots);
-                    String json = jsonMapper.writeValueAsString(gametype);
-                    HttpRequest.BodyPublisher bodyPublisher;
-
-                    String test = conf.GetProperty("CreateGame").toString()+GameKeytextField.getText();
-                    CloseableHttpClient client = HttpClientBuilder.create().build();
-                    HttpPost httpPost = new HttpPost(conf.GetProperty("CreateGame").toString()+GameKeytextField.getText());
-                    httpPost.addHeader("Content-Type", "application/json");
-
-
-
-                    HttpEntity requestEntity = new StringEntity(json, ContentType.APPLICATION_JSON);
-                    httpPost.setEntity(requestEntity);
-
-                    CloseableHttpResponse response = client.execute(httpPost);
-                    HttpEntity responseEntity = response.getEntity();
-                    String responseString = EntityUtils.toString(responseEntity, "UTF-8");*/
-
-
-                    /*Game game = jsonMapper.readValue(responseString, Game.class);
-                    String asd = null;*/
-
-                    //+"?disableInactivityWaves=true"
                     String url = conf.GetProperty("CreateGame").toString()+GameKeytextField.getText()+"?disableInactivityWaves=false";
-                    //String url = conf.GetProperty("CreateGame").toString()+GameKeytextField.getText();
-                    /*URL obj = new URL(url);
-                    HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-
-                    // request method
-                    con.setRequestMethod("POST");
-
-                    // request headers
-                    con.setRequestProperty("accept", "*");
-                    /*con.setRequestProperty("Content-Type", "application/json");*/
-
-                    /*GameCreated gc = new GameCreated();
-                    gc.setGameId(GameKeytextField.getText());
-                    GameConfig gameconfig = new GameConfig();
-                    List<Integer> bots = new ArrayList<>();
-                    bots.add(0);
-                    GameType gm = GameType.SINGLE_PLAYER;
-                    gameconfig.setGameType(gm);
-                    gameconfig.setBots(bots);
-                    gc.setGameConfig(gameconfig);
-                    //String json = jsonMapper.writeValueAsString(gc);
-                    String json =  mapper.writeValueAsString(gc);*/
                     Send send = new Send(url,GameKeytextField.getText());
                     send.CreateGame("json");
-
-                    //{"gameConfig": {"bots": [0],"gameType": "SINGLE_PLAYER"},"gameId": "string"}
-                    //{"gameId":"96e8ae54-1f15-43ac-a55a-f30d33d1ee6e","gameConfig":{"gameType":"SINGLE_PLAYER","bots":[0]}}
-                    //{"gameConfig": {"bots": [0],"gameType": "SINGLE_PLAYER"},"gameId": "string"}
-                    // request body
-                    //String requestBody = "{ \"bots\": [ 0 ], \"gameType\": \"SINGLE_PLAYER\"}";;
-                    /*CloseableHttpClient httpclient = HttpClients.createDefault();
-                    HttpPost httpPost = new HttpPost(url);
-                    //httpPost.setHeader("Accept", "*");
-                    /*httpPost.setHeader("Content-type", "application/json");
-                    StringEntity stringEntity = new StringEntity(json);
-                    httpPost.setEntity(stringEntity);
-
-                    System.out.println("Executing request " + httpPost.getRequestLine());
-                    String wat = httpPost.getRequestLine().toString();
-                    CloseableHttpResponse responseBody = httpclient.execute(httpPost);
-                    HttpEntity responseEntity = responseBody.getEntity();
-                    String responseString = EntityUtils.toString(responseEntity, "UTF-8");
-                    String asd= null;*/
-
                     if(send.response != null) {
                         gameID = jsonMapper.readValue(send.response.body(), GameID.class);
                     }
@@ -229,9 +144,25 @@ public class Main
                 try {
                     Send send = new Send("http://javachallenge.loxon.eu:8081/game/start/" + gameID.getGameId() + "/" + game.getKey(), "");
                     send.startGame();
+                    WebSocketCommunication.StartGame = true;
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
+            }
+        });
+        stopGameButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                Send send = null;
+                try {
+                    send = new Send("http://javachallenge.loxon.eu:8081/game/stop/" + gameID.getGameId() + "/" + game.getKey(), "");
+                    send.stopGame();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+
             }
         });
     }

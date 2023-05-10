@@ -1,9 +1,11 @@
 package Bot;
 
+import challenge.game.model.Game;
 import challenge.game.settings.GameSettings;
 
 public class Controll
 {
+    public static Game game;
     private MBH MBH;
     private  Shield Shield;
     private SpaceMission SpaceMission;
@@ -19,4 +21,5 @@ public class Controll
     {
 
     }
+
 }
