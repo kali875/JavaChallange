@@ -5,12 +5,14 @@ import RestAPI.Response.GameID;
 import Utils.UILogger;
 import challenge.game.event.EventType;
 import challenge.game.event.GameEvent;
+import challenge.game.event.action.GameAction;
 import challenge.game.event.actioneffect.ActionEffectType;
 import challenge.game.event.actioneffect.GravityWaveCrossing;
 import challenge.game.event.actioneffect.WormHoleBuiltEffect;
 import challenge.game.model.Game;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -21,8 +23,11 @@ import javax.websocket.*;
 public class WebSocketCommunication
 {
     private JsonMapper jsonMapper= new JsonMapper();
+    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static Session websocket_session;
     @OnOpen
-    public void onOpen() {
+    public void onOpen(Session session) {
+        websocket_session = session;
         UILogger.log_string("Connected to WebSocket server!");
     }
 
@@ -33,20 +38,15 @@ public class WebSocketCommunication
         {
             GameEvent gameEvent = jsonMapper.readValue(message, GameEvent.class);
             if (gameEvent.getEventType() == EventType.GAME_STARTED) {
-                Controll.game = gameEvent.getGame();
+                Controll.onGameStarted(gameEvent.getGame());
                 UILogger.log_string("Game started :) - Game setting: AFK");
                 UILogger.log_string(".............................................");
             } else if (gameEvent.getEventType() == EventType.ACTION_EFFECT) {
-                if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.WORM_HOLE_BUILT)) {
+                if (gameEvent.getActionEffect() instanceof WormHoleBuiltEffect) {
                     UILogger.log_string("Felépült egy féreglik (nincs lekezelve :( )");
                     UILogger.log_string("lyuk ID: " + ((WormHoleBuiltEffect) gameEvent.getActionEffect()).getWormHoleId());
                     UILogger.log_string(".............................................");
-                } else if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.MBH_HIT_GRAWITY_WAVE_PASSING)
-                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.WORM_HOLE_BUILT_GRAWITY_WAVE_START)
-                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.WORM_HOLE_BUILT_GRAWITY_WAVE_PASSING)
-                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SPACE_MISSION_GRAWITY_WAVE_PASSING)
-                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SPACE_MISSION_GRAWITY_WAVE_START)
-                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.MBH_HIT_GRAWITY_WAVE_START)) {
+                } else if (gameEvent.getActionEffect() instanceof GravityWaveCrossing) {
                     Controll.onGravityWaveCrossingActionEffect((GravityWaveCrossing) gameEvent.getActionEffect());
                 } else {
                     // sima ActionEffect
@@ -71,5 +71,14 @@ public class WebSocketCommunication
     {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         container.connectToServer(WebSocketCommunication.class, websocket_uri);
+    }
+
+    public static void sendGameAction(GameAction gameAction) {
+        try {
+            String message = objectMapper.writeValueAsString(gameAction);
+            websocket_session.getAsyncRemote().sendText(message);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
