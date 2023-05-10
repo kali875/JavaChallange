@@ -48,6 +48,7 @@ public class Main
     private Controll controll = new Controll();
     public Main()
     {
+        GameGridLayout GameGridLayout = new GameGridLayout(200,200);
         //{"httpStatusCode":200,"key":"229c4353-b059-4204-8673-dc65ed0ef0cd","message":"The game key has been successfully generated."}
         createGameKeyButton.addActionListener(new ActionListener()
         {
