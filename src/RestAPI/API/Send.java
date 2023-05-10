@@ -143,7 +143,6 @@ public class Send
         client = newHttpClient();
         request = HttpRequest.newBuilder().uri(URI.create(this.BaseURL)).header("accept", "*/*").header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString("")).build();
         this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        Game game = jsonMapper.readValue(response.body(), Game.class);
         UILogger.log_int(response.statusCode());
         UILogger.log_string(response.body());
     }
