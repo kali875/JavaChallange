@@ -5,6 +5,9 @@ import RestAPI.Response.GameID;
 import Utils.UILogger;
 import challenge.game.event.EventType;
 import challenge.game.event.GameEvent;
+import challenge.game.event.actioneffect.ActionEffectType;
+import challenge.game.event.actioneffect.GravityWaveCrossing;
+import challenge.game.event.actioneffect.WormHoleBuiltEffect;
 import challenge.game.model.Game;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
@@ -34,7 +37,21 @@ public class WebSocketCommunication
                 UILogger.log_string("Game started :) - Game setting: AFK");
                 UILogger.log_string(".............................................");
             } else if (gameEvent.getEventType() == EventType.ACTION_EFFECT) {
-                Controll.onActionEffect(gameEvent.getActionEffect());
+                if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.WORM_HOLE_BUILT)) {
+                    UILogger.log_string("Felépült egy féreglik (nincs lekezelve :( )");
+                    UILogger.log_string("lyuk ID: " + ((WormHoleBuiltEffect) gameEvent.getActionEffect()).getWormHoleId());
+                    UILogger.log_string(".............................................");
+                } else if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.MBH_HIT_GRAWITY_WAVE_PASSING)
+                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.WORM_HOLE_BUILT_GRAWITY_WAVE_START)
+                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.WORM_HOLE_BUILT_GRAWITY_WAVE_PASSING)
+                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SPACE_MISSION_GRAWITY_WAVE_PASSING)
+                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SPACE_MISSION_GRAWITY_WAVE_START)
+                        || gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.MBH_HIT_GRAWITY_WAVE_START)) {
+                    Controll.onGravityWaveCrossingActionEffect((GravityWaveCrossing) gameEvent.getActionEffect());
+                } else {
+                    // sima ActionEffect
+                    Controll.onActionEffect(gameEvent.getActionEffect());
+                }
             } else {
                 UILogger.log_string(message);
             }

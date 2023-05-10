@@ -2,6 +2,7 @@ package Bot;
 
 import Utils.UILogger;
 import challenge.game.event.actioneffect.ActionEffect;
+import challenge.game.event.actioneffect.GravityWaveCrossing;
 import challenge.game.model.Game;
 import challenge.game.settings.GameSettings;
 
@@ -24,16 +25,26 @@ public class Controll
 
     }
 
-    public static void onActionEffect(ActionEffect actionEffect) {
-        UILogger.log_string("ACTION_EFFECT happened:");
+    public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect) {
+        UILogger.log_string("Gravity Wave Crossing Action Effect happened :)");
         UILogger.log_string("Type: ");
         UILogger.log_actionEffectType_arraylist(actionEffect.getEffectChain());
-        UILogger.log_string("Player:");
-        UILogger.log_int(actionEffect.getInflictingPlayer());
-        UILogger.log_string("Affected Planet (id): ");
-        UILogger.log_int(actionEffect.getAffectedMapObjectId());
-        UILogger.log_string("Time at: ");
-        UILogger.log_long(actionEffect.getTime());
+        UILogger.log_string("Player:" + actionEffect.getInflictingPlayer());
+        UILogger.log_string("Affected Planet (id): " + actionEffect.getAffectedMapObjectId());
+        UILogger.log_string("Time at: " + actionEffect.getTime());
+        UILogger.log_string("Cause: " + actionEffect.getCause());
+        UILogger.log_string("source (id): " + actionEffect.getSourceId());
+        UILogger.log_string("direction: " + Math.toDegrees( actionEffect.getDirection() ));
+        UILogger.log_string(".............................................");
+    }
+
+    public static void onActionEffect(ActionEffect actionEffect) {
+        UILogger.log_string("Regular Action Effect happened :)");
+        UILogger.log_string("Type: ");
+        UILogger.log_actionEffectType_arraylist(actionEffect.getEffectChain());
+        UILogger.log_string("Player:" + actionEffect.getInflictingPlayer());
+        UILogger.log_string("Affected Planet (id): " + actionEffect.getAffectedMapObjectId());
+        UILogger.log_string("Time at: " + actionEffect.getTime());
         UILogger.log_string(".............................................");
     }
 }
