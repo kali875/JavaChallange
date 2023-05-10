@@ -144,7 +144,6 @@ public class Main
                 try {
                     Send send = new Send("http://javachallenge.loxon.eu:8081/game/start/" + gameID.getGameId() + "/" + game.getKey(), "");
                     send.startGame();
-                    WebSocketCommunication.StartGame = true;
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }

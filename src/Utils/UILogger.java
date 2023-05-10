@@ -1,7 +1,10 @@
 package Utils;
 
+import challenge.game.event.actioneffect.ActionEffectType;
+
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class UILogger {
     public static String log_data = "";
@@ -18,9 +21,18 @@ public class UILogger {
     public static void log_float(float data) {
         log_data = log_data + data + "\n";
     }
+    public static void log_long(long data) {
+        log_data = log_data + data + "\n";
+    }
 
     public static void log_string_arraylist(ArrayList<String> data) {
         for (String d : data) {
+            log_data = log_data + d + "\n";
+        }
+    }
+
+    public static void log_actionEffectType_arraylist(List<ActionEffectType> data) {
+        for (ActionEffectType d : data) {
             log_data = log_data + d + "\n";
         }
     }

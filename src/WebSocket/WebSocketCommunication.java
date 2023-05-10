@@ -3,6 +3,8 @@ package WebSocket;
 import Bot.Controll;
 import RestAPI.Response.GameID;
 import Utils.UILogger;
+import challenge.game.event.EventType;
+import challenge.game.event.GameEvent;
 import challenge.game.model.Game;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
@@ -16,7 +18,6 @@ import javax.websocket.*;
 public class WebSocketCommunication
 {
     private JsonMapper jsonMapper= new JsonMapper();
-    public static  boolean StartGame = false;
     @OnOpen
     public void onOpen() {
         UILogger.log_string("Connected to WebSocket server!");
@@ -27,17 +28,16 @@ public class WebSocketCommunication
     {
         try
         {
-            if(StartGame)
-            {
-                Controll.game = jsonMapper.readValue(message, Game.class);
+            GameEvent gameEvent = jsonMapper.readValue(message, GameEvent.class);
+            if (gameEvent.getEventType() == EventType.GAME_STARTED) {
+                Controll.game = gameEvent.getGame();
+                UILogger.log_string("Game started :) - Game setting: AFK");
+                UILogger.log_string(".............................................");
+            } else if (gameEvent.getEventType() == EventType.ACTION_EFFECT) {
+                Controll.onActionEffect(gameEvent.getActionEffect());
+            } else {
                 UILogger.log_string(message);
             }
-            else
-            {
-                UILogger.log_string("Received message: " + message);
-            }
-
-            StartGame = false;
         } catch (JsonProcessingException e)
         {
             throw new RuntimeException(e);
