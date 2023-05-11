@@ -33,7 +33,8 @@ public class EnemyDataAnalysis
         if (gravityWaveCrossing.getSourceId() != 0) {
 
             Planet planet = Planets.getPlanetByID(gravityWaveCrossing.getSourceId());
-            if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION) {
+            if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION)
+            {
                 Planets.onPlanetDestroyed(gravityWaveCrossing.getSourceId());
                 EnemyPlanets.removePlanet(planet);
             }
