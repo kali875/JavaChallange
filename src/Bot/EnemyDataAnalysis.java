@@ -12,20 +12,20 @@ import java.util.Map;
 
 public class EnemyDataAnalysis
 {
-    List<Planet> EnemyPlanets = new ArrayList<Planet>();
+    static List<Planet> EnemyPlanets = new ArrayList<Planet>();
     // Maybe Dynamic
-    int frequencyLimit= 2;
-    double StepLength = 1.0;
+    static int frequencyLimit= 2;
+    static double StepLength = 1.0;
     //GravityWaveCrossing
-    private double RadianConverter(int degree)
+    private static double RadianConverter(int degree)
     {
         return Math.toRadians( (360/100)*degree);
     }
-    public void DataAnalys(GravityWaveCrossing GravityWaveCrossing)
+    public static void DataAnalys(GravityWaveCrossing GravityWaveCrossing)
     {
         Planet planet= null;
         for (Planet it : Controll.game.getWorld().getPlanets()) {
-            if (it.getId() == GravityWaveCrossing.getSourceId())
+            if (it.getId() == GravityWaveCrossing.getAffectedMapObjectId())
             {
                 planet = it;
             }
@@ -35,7 +35,7 @@ public class EnemyDataAnalysis
         {
             double StartDegree  =    GravityWaveCrossing.getDirection() - RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
             double EndDegree    =    GravityWaveCrossing.getDirection() + RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,this.StepLength);
+            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,StepLength);
             SelectPlanet(Data);
 
         }
@@ -43,21 +43,21 @@ public class EnemyDataAnalysis
         {
             double StartDegree  =    GravityWaveCrossing.getDirection() - RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
             double EndDegree    =    GravityWaveCrossing.getDirection() + RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,this.StepLength);
+            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,StepLength);
             SelectPlanet(Data);
         }
         else if( GravityWaveCrossing.getCause() == GravityWaveCause.WORMHOLE)
         {
             double StartDegree  =    GravityWaveCrossing.getDirection() - RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
             double EndDegree    =    GravityWaveCrossing.getDirection() + RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,this.StepLength);
+            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,StepLength);
             SelectPlanet(Data);
         }
         else if(GravityWaveCrossing.getCause() == GravityWaveCause.PASSIVITY)
         {
             double StartDegree  =    GravityWaveCrossing.getDirection() - RadianConverter(Controll.game.getSettings().getPassivityFleshPrecision());
             double EndDegree    =    GravityWaveCrossing.getDirection() + RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,this.StepLength);
+            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,StepLength);
             SelectPlanet(Data);
         }
     }
@@ -98,7 +98,7 @@ public class EnemyDataAnalysis
         return Math.abs(aktualisIranyXKomponens - vegXKomponens) < 1e-9 && Math.abs(aktualisIranyYKomponens - vegYKomponens) < 1e-9;
     }
 
-    public void SelectPlanet(List<int[]> cells)
+    public static void SelectPlanet(List<int[]> cells)
     {
         List<Planet> temp =  new ArrayList<Planet>();
         for (Planet planet: Controll.game.getWorld().getPlanets())
@@ -112,7 +112,7 @@ public class EnemyDataAnalysis
             }
         }
     }
-    public Planet CheckMaybeEnemy()
+    public static Planet CheckMaybeEnemy()
     {
         Planet Palnet = null;
         // Csoportok tárolására Map
@@ -139,12 +139,12 @@ public class EnemyDataAnalysis
             int id = entry.getKey();
             List<Planet> group = entry.getValue();
             int count = group.size();
-            if(count >this.frequencyLimit)
+            if(count >frequencyLimit)
             {
                 return group.get(0);
             }
         }
 
-        return null;
+        return new Planet();
     }
 }

@@ -8,17 +8,22 @@ import challenge.game.model.Planet;
 import challenge.game.model.Player;
 import challenge.game.settings.GameSettings;
 
+import javax.swing.Timer;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 
 public class Controll
 {
-    private static Game game;
+    public static Game game;
     private MBH MBH;
     private  Shield Shield;
     private SpaceMission SpaceMission;
     private  WormHole WormHole;
+    private static Planet base_planet;
 
     public static final GameSettings gameSettings = null;
+    private static long time = -1;
 
     public void StartStrategy()
     {
@@ -52,11 +57,11 @@ public class Controll
         Optional<Planet> optional_base_planet = game.getWorld().getPlanets().stream()
                 .filter(planet -> planet.getPlayer() == javaless_wonders.getId())
                 .findFirst();
-        Planet base_planet;
+
         if (optional_base_planet.isPresent()) {
             base_planet = optional_base_planet.get();
         } else {
-            throw new RuntimeException("Very big baj nincs bolgyónk xd");
+            throw new RuntimeException("Very big baj nincs bolygónk xd");
         }
 
         for (Planet p : game.getWorld().getPlanets()) {
@@ -64,12 +69,28 @@ public class Controll
             planetMap.put(distance, p);
         }
 
-
-
-        for (int i = 0; i < game.getSettings().getMaxConcurrentActions(); i++) {
+        for (int i = 0; i < game.getSettings().getMaxConcurrentActions() - 1; i++) {
             Bot.SpaceMission.sendSpaceMission(base_planet.getId(), planetMap.get(planetMap.firstKey()).getId());
             planetMap.remove(planetMap.firstKey());
         }
+
+/*        javax.swing.Timer shield_timer = new Timer(100, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (time < 0) {
+                    test_shield();
+                    time = game.getSettings().getShildDuration() + game.getSettings().getTimeToBuildShild();
+                } else {
+                    time = time - 100;
+                }
+            }
+        });
+        shield_timer.start();*/
+        Bot.MBH.sendMBH(base_planet.getId(), base_planet.getId());
+    }
+
+    public static void test_shield() {
+        Bot.Shield.erectShield(base_planet.getId());
     }
 
     public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect) {
@@ -83,6 +104,11 @@ public class Controll
         UILogger.log_string("source (id): " + actionEffect.getSourceId());
         UILogger.log_string("direction: " + Math.toDegrees( actionEffect.getDirection() ));
         UILogger.log_string(".............................................");
+        EnemyDataAnalysis.DataAnalys(actionEffect);
+        Planet p = EnemyDataAnalysis.CheckMaybeEnemy();
+        if (!Objects.isNull(p)) {
+            System.out.println(p.getX());
+        }
     }
 
     public static void onActionEffect(ActionEffect actionEffect) {

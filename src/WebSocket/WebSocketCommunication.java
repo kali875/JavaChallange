@@ -42,6 +42,10 @@ public class WebSocketCommunication
                 UILogger.log_string("Game started :) - Game setting: AFK");
                 UILogger.log_string(".............................................");
             } else if (gameEvent.getEventType() == EventType.ACTION_EFFECT) {
+                if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SHIELD_DESTROYED)) {
+                    System.out.println(message);
+                    UILogger.log_string(message);
+                }
                 if (gameEvent.getActionEffect() instanceof WormHoleBuiltEffect) {
                     UILogger.log_string("Felépült egy féreglik (nincs lekezelve :( )");
                     UILogger.log_string("lyuk ID: " + ((WormHoleBuiltEffect) gameEvent.getActionEffect()).getWormHoleId());
