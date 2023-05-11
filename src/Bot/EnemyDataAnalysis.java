@@ -36,6 +36,7 @@ public class EnemyDataAnalysis
             {
                 if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION) {
                     it.setDestroyed(true);
+                    EnemyPlanets.removePlanet(it);
                 }
                 planet = it;
                 break;
