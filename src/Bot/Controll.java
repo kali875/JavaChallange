@@ -1,5 +1,6 @@
 package Bot;
 
+import GameData.Actions;
 import GameData.Planets;
 import Utils.UILogger;
 import challenge.game.event.action.GameAction;
@@ -24,6 +25,7 @@ public class Controll
     private  Shield Shield;
     private SpaceMission SpaceMission;
     private  WormHole WormHole;
+    private static Pair<GameAction, Planet> lastAction;
 
     public static final GameSettings gameSettings = null;
 
@@ -54,17 +56,31 @@ public class Controll
         UILogger.log_string("direction: " + Math.toDegrees( actionEffect.getDirection() ));
         UILogger.log_string(".............................................");
 
-        EnemyDataAnalysis.analyzeData(actionEffect);
+        /*EnemyDataAnalysis.analyzeData(actionEffect);
         Planet p = EnemyDataAnalysis.GetEnemyPlanet();
         if (p != null) {
             Bot.MBH.sendMBH(Planets.getPlanets_owned().get(0).getId(), p.getId());
-        } else {
-            Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets();
-            if (new Random().nextInt(3) == 0)
-                Bot.MBH.sendMBH(closestPlanet.getSecond().getFirst().getId(), closestPlanet.getSecond().getSecond().getId());
-            else
-                Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst().getId(), closestPlanet.getSecond().getSecond().getId());
+        } else {*/
+        if (Actions.getRemainingActionCount() < 1) return;
+        Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets();
+        if (new Random().nextInt(3) == 0 || closestPlanet == null) {
+            Planet planet = null;
+            while (planet == null) {
+                if (Planets.unhabitable_planets.size() == 0) break;
+                planet = Planets.getPlanetByID(Planets.unhabitable_planets.get(0));
+                if (planet == null) Planets.unhabitable_planets.remove(0);
+            }
+            if (planet == null) return;
+            Planets.unhabitable_planets.remove(0);
+            GameAction action = Bot.MBH.sendMBH(Planets.getPlanets_owned().get(0).getId(), planet.getId());
+            setLastAction(action, closestPlanet.getSecond().getSecond());
         }
+        else {
+            GameAction action = Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst().getId(), closestPlanet.getSecond().getSecond().getId());
+            setLastAction(action, closestPlanet.getSecond().getSecond());
+        }
+
+        //}
     }
 
     public static void onActionEffect(ActionEffect actionEffect) {
@@ -78,4 +94,7 @@ public class Controll
         UILogger.log_string(".............................................");
     }
 
+    public static Pair<GameAction, Planet> getLastAction() {return lastAction;}
+
+    public static void setLastAction(GameAction action, Planet planet) {lastAction = new Pair<>(action, planet);}
 }

@@ -26,8 +26,8 @@ public class Planets {
     }
 
     public static void onPlanetDestroyed(int planet_id) {
-        Planet planet_destroyed = getPlanetByID(planet_id);
-        planets_owned.removeIf(n -> n.getId() == planet_destroyed.getId());
+        planets.removeIf(p -> p.getId() == planet_id);
+        planets_owned.removeIf(p -> p.getId() == planet_id);
     }
 
     public static void onPlanetCaptured(int planet_id) {
@@ -61,7 +61,7 @@ public class Planets {
         for (Planet planet : planets) {
             if (planet.isDestroyed()) continue;
             if (planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId()) continue;
-            if (unhabitable_planets.contains(planet)) continue;
+            if (unhabitable_planets.contains(planet.getId())) continue;
 
             double minimum_distance = Double.MAX_VALUE;
             int minimum_distance_id = 0;
@@ -75,6 +75,7 @@ public class Planets {
             closestPlanets.put(minimum_distance, new Pair<>(planets_owned.get(minimum_distance_id), planet));
         }
 
+        if (closestPlanets.isEmpty()) return null;
         return new Pair<>(closestPlanets.firstKey(), closestPlanets.get(closestPlanets.firstKey()));
     }
 }

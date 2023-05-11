@@ -7,6 +7,7 @@ import GameData.Planets;
 import challenge.game.event.EventType;
 import challenge.game.event.GameEvent;
 import challenge.game.event.action.ActionResponse;
+import challenge.game.event.action.GameActionType;
 import challenge.game.event.actioneffect.ActionEffect;
 import challenge.game.event.actioneffect.ActionEffectType;
 import challenge.game.event.actioneffect.GravityWaveCrossing;
@@ -84,7 +85,7 @@ public class MessageHandler {
 
     private void handleActionResponse(ActionResponse actionResponse) {
         // TODO: Implement this
-        UILogger.log_string(actionResponse.getResult().getMessage());
+        UILogger.log_string(actionResponse.toString() + "targetid" + actionResponse.getAction().getTargetId());
     }
 
     private void handleAttributeChange(AttributeChanges attributeChanges) {
@@ -94,6 +95,11 @@ public class MessageHandler {
             String value = new AttributeChangeChecker(attributeChanges.getChanges()).contains("numberOfRemainingActions");
             if (!value.equals("false")) {
                 Actions.onActionAttributeChange(Integer.valueOf(value));
+                if (Controll.getLastAction().getFirst().getType() == GameActionType.SPACE_MISSION) {
+                    if (!Planets.getPlanets_owned().contains(Controll.getLastAction().getSecond())) {
+                        Planets.planetIsUnhabitable(Controll.getLastAction().getSecond().getId());
+                    }
+                }
             }
 
             // Something else implement that it later here
