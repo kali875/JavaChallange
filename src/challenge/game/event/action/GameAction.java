@@ -21,7 +21,8 @@ import lombok.Data;
 		  @Type(value = ErectShieldAction.class, name = "ERECT_SHIELD"),
 		  @Type(value = BuildWormHoleAction.class, name = "BUILD_WORM_HOLE")
 		})
-public abstract class GameAction {
+public abstract class GameAction
+{
     /**
      * Az akció típusa.
      */

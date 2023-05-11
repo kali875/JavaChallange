@@ -23,6 +23,7 @@ public class SpaceMission
         action.setOriginId(start_planet_id);
         action.setRefId(randomNumber);
         action.setTargetId(target_planet_id);
+        Controll.Commands.add(action);
         WebSocketCommunication.sendGameAction(action);
         return action;
     }

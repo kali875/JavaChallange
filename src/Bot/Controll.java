@@ -2,6 +2,8 @@ package Bot;
 
 import GameData.Planets;
 import Utils.UILogger;
+import challenge.game.event.action.GameAction;
+import challenge.game.event.action.ShootMBHAction;
 import challenge.game.event.actioneffect.ActionEffect;
 import challenge.game.event.actioneffect.GravityWaveCrossing;
 import challenge.game.model.Game;
@@ -25,6 +27,8 @@ public class Controll
     private static Player javaless_wonders;
 
     public static final GameSettings gameSettings = null;
+
+    public static List<GameAction> Commands = new ArrayList<GameAction>();
 
     public void StartStrategy()
     {
@@ -70,7 +74,8 @@ public class Controll
             planetMap.put(distance, p);
         }
 
-        for (int i = 0; i < game.getSettings().getMaxConcurrentActions() - 1; i++) {
+        for (int i = 0; i < game.getSettings().getMaxConcurrentActions() - 1; i++)
+        {
             Bot.SpaceMission.sendSpaceMission(base_planet.getId(), planetMap.get(planetMap.firstKey()).getId());
             planetMap.remove(planetMap.firstKey());
         }
@@ -97,6 +102,7 @@ public class Controll
     }
 
     public static void onActionEffect(ActionEffect actionEffect) {
+
         UILogger.log_string("Regular Action Effect happened :)");
         UILogger.log_string("Type: ");
         UILogger.log_actionEffectType_arraylist(actionEffect.getEffectChain());
