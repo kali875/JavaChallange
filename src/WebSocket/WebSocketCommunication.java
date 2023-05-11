@@ -11,6 +11,7 @@ import challenge.game.event.action.GameAction;
 import challenge.game.event.actioneffect.ActionEffectType;
 import challenge.game.event.actioneffect.GravityWaveCrossing;
 import challenge.game.event.actioneffect.WormHoleBuiltEffect;
+import challenge.game.event.attibute.AttributeChange;
 import challenge.game.model.Game;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
@@ -24,6 +25,7 @@ import javax.websocket.*;
 @ClientEndpoint
 public class WebSocketCommunication
 {
+    int planets_destroyed = 0;
     private JsonMapper jsonMapper= new JsonMapper();
     private static ObjectMapper objectMapper = new ObjectMapper();
     private static Session websocket_session;
@@ -40,11 +42,13 @@ public class WebSocketCommunication
         {
             GameEvent gameEvent = jsonMapper.readValue(message, GameEvent.class);
             if (gameEvent.getEventType() == EventType.GAME_STARTED) {
-                Controll.onGameStarted(gameEvent.getGame());
                 JavalessWonders.setPlayerFromTeams(gameEvent.getGame().getPlayers());
                 Planets.setPlanets(gameEvent.getGame().getWorld().getPlanets());
+
                 UILogger.log_string("Game started :) - Game setting: AFK");
                 UILogger.log_string(".............................................");
+
+                Controll.onGameStarted(gameEvent.getGame());
             } else if (gameEvent.getEventType() == EventType.ACTION_EFFECT) {
                 if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SHIELD_DESTROYED)) {
                     System.out.println(message);
@@ -56,12 +60,25 @@ public class WebSocketCommunication
                     UILogger.log_string(".............................................");
                 } else if (gameEvent.getActionEffect() instanceof GravityWaveCrossing) {
                     Controll.onGravityWaveCrossingActionEffect((GravityWaveCrossing) gameEvent.getActionEffect());
+                    if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SPACE_MISSION_GRAWITY_WAVE_PASSING)
+                            && gameEvent.getActionEffect().getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) {
+                        Planets.planetIsUnhabitable(gameEvent.getActionEffect().getAffectedMapObjectId());
+                    } else if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.MBH_HIT_GRAWITY_WAVE_START)
+                    || (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.MBH_HIT_GRAWITY_WAVE_PASSING) &&
+                            gameEvent.getActionEffect().getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId())) {
+                        planets_destroyed += 1;
+                    }
                 } else {
                     // sima ActionEffect
                     if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SPACE_MISSION_SUCCESS)) {
                         Planets.onPlanetCaptured(gameEvent.getActionEffect().getAffectedMapObjectId());
                     }
                     Controll.onActionEffect(gameEvent.getActionEffect());
+                }
+            } else if (gameEvent.getEventType() == EventType.ATTRIBUTE_CHANGE) {
+                System.out.println(gameEvent.getChanges().getChanges());
+                if (gameEvent.getChanges().getChanges().contains(new AttributeChange("destroyed", "true"))) {
+                    Planets.onPlanetDestroyed(gameEvent.getChanges().getAffectedId());
                 }
             } else {
                 UILogger.log_string(message);
@@ -76,6 +93,7 @@ public class WebSocketCommunication
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
         UILogger.log_string("Disconnected from WebSocket server: " + closeReason);
+
     }
 
     public static void connect(URI websocket_uri) throws IOException, DeploymentException

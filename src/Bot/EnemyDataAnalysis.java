@@ -17,7 +17,7 @@ import Bot.EnemyPlanets;
 public class EnemyDataAnalysis
 {
     static EnemyPlanets enemyPlanets = new EnemyPlanets();
-    int frequencyLimit= 2;
+    static int frequencyLimit= 2;
     static double StepLength = 1.0;
     //GravityWaveCrossing
     private static double RadianConverter(int degree)
@@ -30,28 +30,33 @@ public class EnemyDataAnalysis
         /**
          * Azon bolygó megkeresése, amely a Gravitációs hullám kiváltó oka volt
          */
-        Planet planet = Planets.getPlanetByID(gravityWaveCrossing.getAffectedMapObjectId());
-        if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION) {
-            Planets.onPlanetDestroyed(gravityWaveCrossing.getAffectedMapObjectId());
-            EnemyPlanets.removePlanet(planet);
-        }
+        if (gravityWaveCrossing.getSourceId() != 0) {
 
-        /**
-         * Ha a bolygó elpusztult (MBH robbanás)
-         * Ha űrmisszió történt (Általunk küldött misszió esetén ez azt jelenti, hogy sikertelen volt a missziónk)
-         * Ha féreglyuk épült
-         * Ha a hullám passzivitás miatt érkezett
-         * Feldolgozás:
-         * Az irány radiánban érkezik, a szórás mértéke százalékos, ez a fok kivonandó illetve hozzáadandó az irányhoz
-         * Így kapunk egy relatív "körszeletet", amelyet tartalmazó bolgyók egyike volt a hullámot kiváltó bolygó
-         * Majd a lehetséges bolygók felkerülnek az ellenséges bolygók listájára
-         */
+            Planet planet = Planets.getPlanetByID(gravityWaveCrossing.getSourceId());
+            if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION) {
+                Planets.onPlanetDestroyed(gravityWaveCrossing.getSourceId());
+                EnemyPlanets.removePlanet(planet);
+            }
 
-        if (gravityWaveCrossing.getCause() == GravityWaveCause.PASSIVITY)
-        {
-            getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getPassivityFleshPrecision());
+            /**
+             * Ha a bolygó elpusztult (MBH robbanás)
+             * Ha űrmisszió történt (Általunk küldött misszió esetén ez azt jelenti, hogy sikertelen volt a missziónk)
+             * Ha féreglyuk épült
+             * Ha a hullám passzivitás miatt érkezett
+             * Feldolgozás:
+             * Az irány radiánban érkezik, a szórás mértéke százalékos, ez a fok kivonandó illetve hozzáadandó az irányhoz
+             * Így kapunk egy relatív "körszeletet", amelyet tartalmazó bolgyók egyike volt a hullámot kiváltó bolygó
+             * Majd a lehetséges bolygók felkerülnek az ellenséges bolygók listájára
+             */
+
+            if (gravityWaveCrossing.getCause() == GravityWaveCause.PASSIVITY) {
+                getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getPassivityFleshPrecision());
+            } else {
+                getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
+            }
+
         } else {
-            getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
+            // itt le kéne kezelni a space mission-öket, idk
         }
     }
 
@@ -119,6 +124,7 @@ public class EnemyDataAnalysis
     public static Planet GetEnemyPlanet()
     {
         if (EnemyPlanets.isEmpty()) return null;
+        if (EnemyPlanets.getTheHighestKey() < frequencyLimit) return null;
         return EnemyPlanets.getHighestValuedEnemyPlanet();
     }
 }

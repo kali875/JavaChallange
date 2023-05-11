@@ -26,7 +26,7 @@ public class EnemyPlanets {
         }
     }
 
-    private static int getTheHighestKey() {
+    public static int getTheHighestKey() {
         return Collections.max(enemyPlanets.keySet());
     }
 

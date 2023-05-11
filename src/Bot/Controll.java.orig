@@ -42,6 +42,49 @@ public class Controll
 
     public static void onGameStarted(Game game_data) {
         game = game_data;
+<<<<<<< Updated upstream
+        SortedMap<Float, Planet> planetMap = new TreeMap<>(new Comparator<Float>() {
+            @Override
+            public int compare(Float f1, Float f2) {
+                return Float.compare(f1, f2);
+            }
+        });
+
+
+        Optional<Player> optional_javaless_wonders = game.getPlayers().stream()
+                .filter(player -> player.getTeamName().equals("Javaless Wonders"))
+                .findFirst();
+
+        if (optional_javaless_wonders.isPresent()) {
+            javaless_wonders = optional_javaless_wonders.get();
+        } else {
+            throw new RuntimeException("Very big baj nem vagyunk benne a játékban xd");
+        }
+
+        Optional<Planet> optional_base_planet = game.getWorld().getPlanets().stream()
+                .filter(planet -> planet.getPlayer() == javaless_wonders.getId())
+                .findFirst();
+
+        if (optional_base_planet.isPresent()) {
+            base_planet = optional_base_planet.get();
+        } else {
+            throw new RuntimeException("Very big baj nincs bolygónk xd");
+        }
+
+        for (Planet p : game.getWorld().getPlanets()) {
+            float distance = (float) Math.sqrt(Math.pow(p.getX() - base_planet.getX(), 2) + Math.pow(p.getY() - base_planet.getY(), 2));
+            planetMap.put(distance, p);
+        }
+
+        for (int i = 0; i < game.getSettings().getMaxConcurrentActions() - 1; i++)
+        {
+            Bot.SpaceMission.sendSpaceMission(base_planet.getId(), planetMap.get(planetMap.firstKey()).getId());
+            planetMap.remove(planetMap.firstKey());
+        }
+
+        //Bot.MBH.sendMBH(base_planet.getId(), base_planet.getId());
+=======
+>>>>>>> Stashed changes
     }
 
     public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect) {

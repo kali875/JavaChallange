@@ -1,4 +1,5 @@
 import Bot.Controll;
+import GameData.Planets;
 import RestAPI.API.Send;
 import RestAPI.Model.Parameter;
 import RestAPI.Properties.Config;
@@ -159,6 +160,9 @@ public class Main
                 try {
                     send = new Send("http://javachallenge.loxon.eu:8081/game/stop/" + gameID.getGameId() + "/" + game.getKey(), "");
                     send.stopGame();
+                    UILogger.log_string("Ennyi lakhatatlan bolygót találtam: " + Planets.unhabitable_planets.size());
+                    UILogger.log_string("Ennyi lakható bolygót foglaltam be: " + Planets.getPlanets_owned().size());
+                    UILogger.log_int(Controll.game.getPlayers().size());
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
