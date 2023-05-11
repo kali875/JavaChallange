@@ -24,8 +24,6 @@ public class Controll
     private  Shield Shield;
     private SpaceMission SpaceMission;
     private  WormHole WormHole;
-    private static Planet base_planet;
-    private static Player javaless_wonders;
 
     public static final GameSettings gameSettings = null;
 
@@ -80,7 +78,4 @@ public class Controll
         UILogger.log_string(".............................................");
     }
 
-    public static Player getCurrentPlayer() {
-        return javaless_wonders;
-    }
 }

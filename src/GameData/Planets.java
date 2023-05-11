@@ -25,11 +25,9 @@ public class Planets {
         return result.orElse(null);
     }
 
-    public static void onPlanetDestroyed(int planet_id)
-    {
+    public static void onPlanetDestroyed(int planet_id) {
         Planet planet_destroyed = getPlanetByID(planet_id);
         planets_owned.removeIf(n -> n.getId() == planet_destroyed.getId());
-        //if (planet_destroyed != null) planet_destroyed.setDestroyed(true);
     }
 
     public static void onPlanetCaptured(int planet_id) {
