@@ -1,5 +1,6 @@
 package Bot;
 
+import GameData.Planets;
 import Utils.UILogger;
 import challenge.game.event.actioneffect.ActionEffect;
 import challenge.game.event.actioneffect.GravityWaveCrossing;
@@ -24,7 +25,6 @@ public class Controll
     private static Player javaless_wonders;
 
     public static final GameSettings gameSettings = null;
-    private static long time = -1;
 
     public void StartStrategy()
     {
@@ -75,23 +75,7 @@ public class Controll
             planetMap.remove(planetMap.firstKey());
         }
 
-/*        javax.swing.Timer shield_timer = new Timer(100, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (time < 0) {
-                    test_shield();
-                    time = game.getSettings().getShildDuration() + game.getSettings().getTimeToBuildShild();
-                } else {
-                    time = time - 100;
-                }
-            }
-        });
-        shield_timer.start();*/
-        Bot.MBH.sendMBH(base_planet.getId(), base_planet.getId());
-    }
-
-    public static void test_shield() {
-        Bot.Shield.erectShield(base_planet.getId());
+        //Bot.MBH.sendMBH(base_planet.getId(), base_planet.getId());
     }
 
     public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect) {
@@ -105,11 +89,11 @@ public class Controll
         UILogger.log_string("source (id): " + actionEffect.getSourceId());
         UILogger.log_string("direction: " + Math.toDegrees( actionEffect.getDirection() ));
         UILogger.log_string(".............................................");
-        /*EnemyDataAnalysis.DataAnalys(actionEffect);
-        Planet p = EnemyDataAnalysis.CheckMaybeEnemy();
-        if (!Objects.isNull(p)) {
-            System.out.println(p.getX());
-        }*/
+        EnemyDataAnalysis.analyzeData(actionEffect);
+        Planet p = EnemyDataAnalysis.GetEnemyPlanet();
+        if (p != null) {
+            Bot.MBH.sendMBH(Planets.getPlanets_owned().get(0).getId(), p.getId());
+        }
     }
 
     public static void onActionEffect(ActionEffect actionEffect) {

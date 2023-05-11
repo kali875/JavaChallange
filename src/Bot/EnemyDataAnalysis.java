@@ -1,5 +1,7 @@
 package Bot;
 
+import GameData.JavalessWonders;
+import GameData.Planets;
 import challenge.game.event.actioneffect.GravityWaveCrossing;
 import challenge.game.model.GravityWaveCause;
 import challenge.game.model.Planet;
@@ -22,27 +24,17 @@ public class EnemyDataAnalysis
     {
         return Math.toRadians( (360/100)*degree);
     }
-    public void analyzeData(GravityWaveCrossing gravityWaveCrossing)
+    public static void analyzeData(GravityWaveCrossing gravityWaveCrossing)
     {
 
         /**
          * Azon bolygó megkeresése, amely a Gravitációs hullám kiváltó oka volt
          */
-        Planet planet = null;
-        List<Planet> planets = Controll.game.getWorld().getPlanets();
-        for (Planet it : planets)
-        {
-            if (it.getId() == gravityWaveCrossing.getAffectedMapObjectId())
-            {
-                if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION) {
-                    it.setDestroyed(true);
-                    EnemyPlanets.removePlanet(it);
-                }
-                planet = it;
-                break;
-            }
+        Planet planet = Planets.getPlanetByID(gravityWaveCrossing.getAffectedMapObjectId());
+        if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION) {
+            Planets.onPlanetDestroyed(gravityWaveCrossing.getAffectedMapObjectId());
+            EnemyPlanets.removePlanet(planet);
         }
-        Controll.game.getWorld().setPlanets(planets);
 
         /**
          * Ha a bolygó elpusztult (MBH robbanás)
@@ -113,18 +105,18 @@ public class EnemyDataAnalysis
 
     public static void SelectEnemyPlanets(List<int[]> cells)
     {
-        for (Planet planet: Controll.game.getWorld().getPlanets())
+        for (Planet planet: Planets.getPlanets())
         {
             for (int[] cel :cells)
             {
-                if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() != Controll.getCurrentPlayer().getId() )
+                if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() != JavalessWonders.getCurrentPlayer().getId() )
                 {
                     EnemyPlanets.putEnemyPlanet(planet);
                 }
             }
         }
     }
-    public Planet GetEnemyPlanet()
+    public static Planet GetEnemyPlanet()
     {
         if (EnemyPlanets.isEmpty()) return null;
         return EnemyPlanets.getHighestValuedEnemyPlanet();

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class EnemyPlanets {
-    static MultivaluedHashMap<Integer, Planet> enemyPlanets;
+    static MultivaluedHashMap<Integer, Planet> enemyPlanets = new MultivaluedHashMap<>();
 
     public static void putEnemyPlanet(Planet planet) {
         if (enemyPlanets.containsValue(planet)) {

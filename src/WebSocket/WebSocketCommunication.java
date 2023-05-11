@@ -1,6 +1,8 @@
 package WebSocket;
 
 import Bot.Controll;
+import GameData.JavalessWonders;
+import GameData.Planets;
 import RestAPI.Response.GameID;
 import Utils.UILogger;
 import challenge.game.event.EventType;
@@ -39,6 +41,8 @@ public class WebSocketCommunication
             GameEvent gameEvent = jsonMapper.readValue(message, GameEvent.class);
             if (gameEvent.getEventType() == EventType.GAME_STARTED) {
                 Controll.onGameStarted(gameEvent.getGame());
+                JavalessWonders.setPlayerFromTeams(gameEvent.getGame().getPlayers());
+                Planets.setPlanets(gameEvent.getGame().getWorld().getPlanets());
                 UILogger.log_string("Game started :) - Game setting: AFK");
                 UILogger.log_string(".............................................");
             } else if (gameEvent.getEventType() == EventType.ACTION_EFFECT) {
@@ -54,6 +58,9 @@ public class WebSocketCommunication
                     Controll.onGravityWaveCrossingActionEffect((GravityWaveCrossing) gameEvent.getActionEffect());
                 } else {
                     // sima ActionEffect
+                    if (gameEvent.getActionEffect().getEffectChain().contains(ActionEffectType.SPACE_MISSION_SUCCESS)) {
+                        Planets.onPlanetCaptured(gameEvent.getActionEffect().getAffectedMapObjectId());
+                    }
                     Controll.onActionEffect(gameEvent.getActionEffect());
                 }
             } else {
