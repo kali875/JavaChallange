@@ -21,6 +21,7 @@ public class Controll
     private SpaceMission SpaceMission;
     private  WormHole WormHole;
     private static Planet base_planet;
+    private static Player javaless_wonders;
 
     public static final GameSettings gameSettings = null;
     private static long time = -1;
@@ -47,7 +48,7 @@ public class Controll
         Optional<Player> optional_javaless_wonders = game.getPlayers().stream()
                 .filter(player -> player.getTeamName().equals("Javaless Wonders"))
                 .findFirst();
-        Player javaless_wonders;
+
         if (optional_javaless_wonders.isPresent()) {
             javaless_wonders = optional_javaless_wonders.get();
         } else {
@@ -104,11 +105,11 @@ public class Controll
         UILogger.log_string("source (id): " + actionEffect.getSourceId());
         UILogger.log_string("direction: " + Math.toDegrees( actionEffect.getDirection() ));
         UILogger.log_string(".............................................");
-        EnemyDataAnalysis.DataAnalys(actionEffect);
+        /*EnemyDataAnalysis.DataAnalys(actionEffect);
         Planet p = EnemyDataAnalysis.CheckMaybeEnemy();
         if (!Objects.isNull(p)) {
             System.out.println(p.getX());
-        }
+        }*/
     }
 
     public static void onActionEffect(ActionEffect actionEffect) {
@@ -119,5 +120,9 @@ public class Controll
         UILogger.log_string("Affected Planet (id): " + actionEffect.getAffectedMapObjectId());
         UILogger.log_string("Time at: " + actionEffect.getTime());
         UILogger.log_string(".............................................");
+    }
+
+    public static Player getCurrentPlayer() {
+        return javaless_wonders;
     }
 }

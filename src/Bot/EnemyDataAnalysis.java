@@ -4,157 +4,128 @@ import challenge.game.event.actioneffect.GravityWaveCrossing;
 import challenge.game.model.GravityWaveCause;
 import challenge.game.model.Planet;
 import challenge.game.model.Player;
+import org.glassfish.grizzly.utils.Pair;
 
 import java.util.*;
 import java.lang.Math;
 import java.util.Map;
 
+import Bot.EnemyPlanets;
+
 public class EnemyDataAnalysis
 {
-    List<Planet> EnemyPlanets = new ArrayList<Planet>();
-    // Maybe Dynamic
+    static EnemyPlanets enemyPlanets = new EnemyPlanets();
     int frequencyLimit= 2;
-    double StepLength = 1.0;
+    static double StepLength = 1.0;
     //GravityWaveCrossing
-    private double RadianConverter(int degree)
+    private static double RadianConverter(int degree)
     {
         return Math.toRadians( (360/100)*degree);
     }
-    public void DataAnalys(GravityWaveCrossing GravityWaveCrossing)
+    public void analyzeData(GravityWaveCrossing gravityWaveCrossing)
     {
 
-        Planet planet= null;
-        for (Planet it : Controll.game.getWorld().getPlanets())
+        /**
+         * Azon bolygó megkeresése, amely a Gravitációs hullám kiváltó oka volt
+         */
+        Planet planet = null;
+        List<Planet> planets = Controll.game.getWorld().getPlanets();
+        for (Planet it : planets)
         {
-            if (it.getId() == GravityWaveCrossing.getSourceId())
+            if (it.getId() == gravityWaveCrossing.getAffectedMapObjectId())
             {
+                if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION) {
+                    it.setDestroyed(true);
+                }
                 planet = it;
-            }
-        }
-
-        if(GravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION)
-        {
-            double StartDegree  =    GravityWaveCrossing.getDirection() - RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            double EndDegree    =    GravityWaveCrossing.getDirection() + RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,this.StepLength);
-            SelectPlanet(Data);
-
-        }
-        else if( GravityWaveCrossing.getCause() == GravityWaveCause.SPACE_MISSION)
-        {
-            double StartDegree  =    GravityWaveCrossing.getDirection() - RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            double EndDegree    =    GravityWaveCrossing.getDirection() + RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,this.StepLength);
-            SelectPlanet(Data);
-        }
-        else if( GravityWaveCrossing.getCause() == GravityWaveCause.WORMHOLE)
-        {
-            double StartDegree  =    GravityWaveCrossing.getDirection() - RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            double EndDegree    =    GravityWaveCrossing.getDirection() + RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,this.StepLength);
-            SelectPlanet(Data);
-        }
-        else if(GravityWaveCrossing.getCause() == GravityWaveCause.PASSIVITY)
-        {
-            double StartDegree  =    GravityWaveCrossing.getDirection() - RadianConverter(Controll.game.getSettings().getPassivityFleshPrecision());
-            double EndDegree    =    GravityWaveCrossing.getDirection() + RadianConverter(Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            List<int[]> Data = gyujtsErintettCellakat(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planet,EndDegree,StartDegree,this.StepLength);
-            SelectPlanet(Data);
-        }
-    }
-    public static List<int[]> gyujtsErintettCellakat(long width, long height, Planet planet, double StartDegree, double EndDegree, double StepLength)
-    {
-        List<int[]> HitCell = new ArrayList<>();
-        // X és Y komponensek kiszámítása a kezdő és végpont irányszögek alapján
-        double kezdoXKomponens = Math.cos(StartDegree);
-        double kezdoYKomponens = Math.sin(StartDegree);
-
-        double vegXKomponens = Math.cos(EndDegree);
-        double vegYKomponens = Math.sin(EndDegree);
-
-        // Aktuális pozíció inicializálása
-        double aktualisSor = planet.getX();
-        double aktualisOszlop = planet.getY();
-
-        // Lépkedés a rácsban
-        while (aktualisSor >= 0 && aktualisSor < width && aktualisOszlop >= 0 && aktualisOszlop < height)
-        {
-            // Aktuális cella hozzáadása a listához
-            HitCell.add(new int[]{(int) aktualisSor, (int) aktualisOszlop});
-
-            // Lépés az x és y komponensekkel
-            aktualisSor += kezdoYKomponens * StepLength;
-            aktualisOszlop += kezdoXKomponens * StepLength;
-            if (iranyValtozas(kezdoXKomponens, kezdoYKomponens, vegXKomponens, vegYKomponens, aktualisSor, aktualisOszlop)) {
                 break;
             }
         }
-     return HitCell;
-    }
-    public static boolean iranyValtozas(double kezdoXKomponens, double kezdoYKomponens, double vegXKomponens, double vegYKomponens, double aktualisSor, double aktualisOszlop) {
-        // Ellenőrzés, hogy az irány megváltozott-e
-        double aktualisIranyXKomponens = Math.cos(Math.atan2(aktualisSor, aktualisOszlop));
-        double aktualisIranyYKomponens = Math.sin(Math.atan2(aktualisSor, aktualisOszlop));
+        Controll.game.getWorld().setPlanets(planets);
 
-        return Math.abs(aktualisIranyXKomponens - vegXKomponens) < 1e-9 && Math.abs(aktualisIranyYKomponens - vegYKomponens) < 1e-9;
-    }
+        /**
+         * Ha a bolygó elpusztult (MBH robbanás)
+         * Ha űrmisszió történt (Általunk küldött misszió esetén ez azt jelenti, hogy sikertelen volt a missziónk)
+         * Ha féreglyuk épült
+         * Ha a hullám passzivitás miatt érkezett
+         * Feldolgozás:
+         * Az irány radiánban érkezik, a szórás mértéke százalékos, ez a fok kivonandó illetve hozzáadandó az irányhoz
+         * Így kapunk egy relatív "körszeletet", amelyet tartalmazó bolgyók egyike volt a hullámot kiváltó bolygó
+         * Majd a lehetséges bolygók felkerülnek az ellenséges bolygók listájára
+         */
 
-    public void SelectPlanet(List<int[]> cells)
-    {
-        Optional<Player> optional_javaless_wonders = Controll.game.getPlayers().stream()
-                .filter(player -> player.getTeamName().equals("Javaless Wonders"))
-                .findFirst();
-
-        Player javaless_wonders = null;
-        if (optional_javaless_wonders.isPresent())
+        if (gravityWaveCrossing.getCause() == GravityWaveCause.PASSIVITY)
         {
-            javaless_wonders = optional_javaless_wonders.get();
+            getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getPassivityFleshPrecision());
+        } else {
+            getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
         }
-        List<Planet> temp =  new ArrayList<Planet>();
+    }
+
+    private static void getPossiblePlanets(GravityWaveCrossing gravityWaveCrossing, Planet affected_planet, int precision) {
+        double StartDegree  =    gravityWaveCrossing.getDirection() - RadianConverter(precision);
+        double EndDegree    =    gravityWaveCrossing.getDirection() + RadianConverter(precision);
+        List<int[]> cells = findPossibleCells(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),affected_planet,EndDegree,StartDegree);
+        SelectEnemyPlanets(cells);
+    }
+
+    public static List<int[]> findPossibleCells(long width, long height, Planet planet, double startDegree, double endDegree)
+    {
+        List<int[]> possibleCells = new ArrayList<>();
+        /** X és Y komponensek kiszámítása a kezdő és végpont irányszögek alapján
+         * Position: (x,y) pair
+         */
+        Pair<Double, Double> startPosition = new Pair<>();
+        startPosition.setFirst(Math.cos(startDegree));
+        startPosition.setSecond(Math.sin(startDegree));
+
+        Pair<Double, Double> endPosition = new Pair<>();
+        endPosition.setFirst(Math.cos(endDegree));
+        endPosition.setSecond(Math.sin(endDegree));
+
+        // Aktuális pozíció inicializálása
+        double current_row = planet.getX();
+        double current_column = planet.getY();
+
+        // Lépkedés a rácsban
+        while (current_row >= 0 && current_row < width && current_column >= 0 && current_column < height)
+        {
+            // Aktuális cella hozzáadása a listához
+            possibleCells.add(new int[]{(int) current_row, (int) current_column});
+
+            // Lépés az x és y komponensekkel
+            current_row += startPosition.getSecond() * StepLength;
+            current_column += startPosition.getFirst() * StepLength;
+            if (checkForDirectionChange(endPosition.getFirst(), endPosition.getSecond(), current_row, current_column)) {
+                break;
+            }
+        }
+     return possibleCells;
+    }
+    public static boolean checkForDirectionChange(double endPosition_X, double endPosition_Y, double current_row, double current_column) {
+        // Ellenőrzés, hogy az irány megváltozott-e
+        double direction_X = Math.cos(Math.atan2(current_row, current_column));
+        double direction_Y = Math.sin(Math.atan2(current_row, current_column));
+
+        return Math.abs(direction_X - endPosition_X) < 1e-9 && Math.abs(direction_Y - endPosition_Y) < 1e-9;
+    }
+
+    public static void SelectEnemyPlanets(List<int[]> cells)
+    {
         for (Planet planet: Controll.game.getWorld().getPlanets())
         {
             for (int[] cel :cells)
             {
-                if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() != javaless_wonders.getId() )
+                if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() != Controll.getCurrentPlayer().getId() )
                 {
-                    EnemyPlanets.add(planet);
+                    EnemyPlanets.putEnemyPlanet(planet);
                 }
             }
         }
     }
-    public Planet CheckMaybeEnemy()
+    public Planet GetEnemyPlanet()
     {
-        Planet Palnet = null;
-        // Csoportok tárolására Map
-        Map<Integer, List<Planet>> groups = new HashMap<>();
-
-        // Objektumok csoportokba rendezése az azonosító szerint
-        for (Planet obj : EnemyPlanets)
-        {
-            int id = obj.getId();
-
-            // Ellenőrizd, hogy van-e már ilyen azonosítóval rendelkező csoport
-            if (!groups.containsKey(id)) {
-                // Ha nincs, hozz létre új csoportot
-                groups.put(id, new ArrayList<>());
-            }
-
-            // Fűzd hozzá az objektumot a csoport elemeihez
-            groups.get(id).add(obj);
-        }
-
-        // Csoportok elemek számának megszámlálása
-        for (Map.Entry<Integer, List<Planet>> entry : groups.entrySet())
-        {
-            int id = entry.getKey();
-            List<Planet> group = entry.getValue();
-            int count = group.size();
-            if(count >this.frequencyLimit)
-            {
-                return group.get(0);
-            }
-        }
-
-        return null;
+        if (EnemyPlanets.isEmpty()) return null;
+        return EnemyPlanets.getHighestValuedEnemyPlanet();
     }
 }
