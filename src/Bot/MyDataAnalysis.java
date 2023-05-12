@@ -16,9 +16,13 @@ import org.glassfish.grizzly.utils.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
+
+import static Bot.DefensePlanets.DefPlanets;
 
 public class MyDataAnalysis
 {
+    static List<Planet> temp = new ArrayList<Planet>();
     static int frequencyLimit= 5;
     static double StepLength = 1.0;
     //GravityWaveCrossing
@@ -41,21 +45,23 @@ public class MyDataAnalysis
 
         for (GameAction value:Controll.Commands)
         {
-            if(value.getRefId() == GameEvent.getId())
+            if(value.getTargetId() == GameEvent.getActionEffect().getAffectedMapObjectId())
             {
                 if(value instanceof ShootMBHAction)
                 {
 
                     ShootMBHAction shoot = (ShootMBHAction)value;
-                    temp.add((Planet) Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == shoot.getTargetId()));
-                    temp.add((Planet) Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == ((ShootMBHAction) value).getOriginId()));
+                    temp.add(Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == shoot.getTargetId()).findFirst().orElse(null));
+                    temp.add(Planets.getPlanets_owned().stream().filter(Planet -> Planet.getId() == ((ShootMBHAction) value).getOriginId()).findFirst().orElse(null));
+
                     return temp;
                 }
                 else if(value instanceof SpaceMissionAction)
                 {
                     SpaceMissionAction mission = (SpaceMissionAction)value;
-                    temp.add((Planet) Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == mission.getTargetId()));
-                    temp.add((Planet) Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == ((SpaceMissionAction) value).getOriginId()));
+                    temp.add( Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == mission.getTargetId()).findFirst().orElse(null));
+                    temp.add( Planets.getPlanets_owned().stream().filter(Planet -> Planet.getId() == ((SpaceMissionAction) value).getOriginId()).findFirst().orElse(null));
+
                     return temp;
                 }
             }
@@ -65,32 +71,42 @@ public class MyDataAnalysis
     public static void analData(GameEvent GameEvent)
     {
         /**
-         * Azon sajéát bolygónk mérlegelése az kimenő adatok alapján
+         * Azon saját bolygónk mérlegelése az kimenő adatok alapján
          */
-        List<Planet> temp = FindPlanet(GameEvent);
-        Planet TargetPlanet = temp.get(0);
-        Planet SrcPlanet = temp.get(1);
-        double rad = DefinesDirection(SrcPlanet,TargetPlanet);
+        temp = FindPlanet(GameEvent);
 
-
-        for ( ActionEffectType type:GameEvent.getActionEffect().getEffectChain())
+        if(temp != null)
         {
-            switch (type)
+            Planet TargetPlanet = temp.get(0);
+            Planet SrcPlanet = temp.get(1);
+            double rad = DefinesDirection(SrcPlanet,TargetPlanet);
+
+            for ( ActionEffectType type:GameEvent.getActionEffect().getEffectChain())
             {
-                case INACTIVITY_FLARE_START:
-                    getPossiblePlanets(rad,TargetPlanet,Controll.gameSettings.getPassivityFleshPrecision());
-                    break;
-                case SPACE_MISSION_GRAWITY_WAVE_START:
-                    getPossiblePlanets(rad,TargetPlanet,Controll.gameSettings.getGravityWaveSourceLocationPrecision());
-                    break;
-                case SPACE_MISSION_DESTROYED:
-                    getPossiblePlanets(rad,TargetPlanet,Controll.gameSettings.getGravityWaveSourceLocationPrecision());
-                    break;
-                case WORM_HOLE_BUILT_GRAWITY_WAVE_START:
-                    getPossiblePlanets(rad,TargetPlanet,Controll.gameSettings.getGravityWaveSourceLocationPrecision());
-                    break;
+                switch (type)
+                {
+                    case INACTIVITY_FLARE_START:
+                        getPossiblePlanets(rad,TargetPlanet,Controll.game.getSettings().getPassivityFleshPrecision());
+                        break;
+                    case SPACE_MISSION_GRAWITY_WAVE_START:
+                        getPossiblePlanets(rad,TargetPlanet,Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
+                        break;
+                    case SPACE_MISSION_DESTROYED:
+                        getPossiblePlanets(rad,TargetPlanet,Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
+                        break;
+                    case WORM_HOLE_BUILT_GRAWITY_WAVE_START:
+                        getPossiblePlanets(rad,TargetPlanet,Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
+                        break;
+                }
             }
+            System.out.println("Gyüjtött palnéták száma: "+ DefPlanets.size());
+            //System.out.println(Planets.getPlanets_owned().size());
         }
+        else
+        {
+            System.out.println("null src, targetid ");
+        }
+
     }
 
     private static void getPossiblePlanets(double rad, Planet affected_planet, int precision) {
@@ -149,18 +165,18 @@ public class MyDataAnalysis
             {
                 if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId() )
                 {
-                    EnemyPlanets.putEnemyPlanet(planet);
+                    DefensePlanets.putDefPlanet(planet);
                 }
             }
         }
     }
     public static Planet GetDefPlanet()
     {
-        if (EnemyPlanets.isEmpty()) return null;
+        if (DefensePlanets.isEmpty()) return null;
 
-        if(EnemyPlanets.getTheHighestKey() > frequencyLimit)
+        if(DefensePlanets.getTheHighestKey() > frequencyLimit)
         {
-            return EnemyPlanets.getHighestValuedEnemyPlanet();
+            return DefensePlanets.getHighestValuedDefPlanet();
         }
         return null;
     }
