@@ -77,7 +77,6 @@ public class Main
 
                     if(send.response != null)//responsecode == 200
                     {
-                        String bodystring = send.response.body().toString();
                         game = jsonMapper.readValue(send.response.body().toString(), GameKey.class);
                         GameKeytextField.setText(game.getKey());
                     }

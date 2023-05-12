@@ -3,15 +3,13 @@ package Bot;
 import challenge.game.model.Planet;
 import org.glassfish.tyrus.core.uri.internal.MultivaluedHashMap;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EnemyPlanets {
-    static MultivaluedHashMap<Integer, Planet> enemyPlanets = new MultivaluedHashMap<>();
+    static HashMap<Integer, List<Planet>> enemyPlanets = new HashMap<>();
 
     public static void putEnemyPlanet(Planet planet) {
-        if (enemyPlanets.containsValue(planet)) {
+        if (containsValue(planet)) {
             int previousKey = 0;
             for (Map.Entry<Integer, List<Planet>> entry : enemyPlanets.entrySet()) {
                 if (entry.getValue().contains(planet)) {
@@ -20,10 +18,29 @@ public class EnemyPlanets {
                     break;
                 }
             }
-            enemyPlanets.add(previousKey + 1, planet);
+            if (enemyPlanets.containsKey(previousKey + 1)) {
+                enemyPlanets.get(previousKey + 1).add(planet);
+            } else {
+                List<Planet> temp_list = new ArrayList<>();
+                temp_list.add(planet);
+                enemyPlanets.put(previousKey + 1, temp_list);
+            }
         } else {
-            enemyPlanets.add(0, planet);
+            if (enemyPlanets.containsKey(0)) {
+                enemyPlanets.get(0).add(planet);
+            } else {
+                List<Planet> temp_list = new ArrayList<>();
+                temp_list.add(planet);
+                enemyPlanets.put(0, temp_list);
+            }
         }
+    }
+
+    private static boolean containsValue(Planet planet) {
+        for (List<Planet> planets : enemyPlanets.values())
+            for (Planet p : planets)
+                if (p.getId() == planet.getId()) return true;
+        return false;
     }
 
     public static int getTheHighestKey() {
@@ -31,14 +48,22 @@ public class EnemyPlanets {
     }
 
     public static Planet getHighestValuedEnemyPlanet() {
-        return enemyPlanets.get(getTheHighestKey()).get(0);
+        for (Planet p : enemyPlanets.get(getTheHighestKey())) {
+            return p;
+        }
+        return null;
+    }
+
+    private static void syncMap() {
+        enemyPlanets.values().removeIf(List::isEmpty);
     }
 
     public static void removePlanet(Planet planet) {
-        if (enemyPlanets.containsValue(planet)) {
+        if (containsValue(planet)) {
             for (Map.Entry<Integer, List<Planet>> entry : enemyPlanets.entrySet()) {
                 if (entry.getValue().contains(planet)) {
                     entry.getValue().remove(planet);
+                    syncMap();
                     return;
                 }
             }

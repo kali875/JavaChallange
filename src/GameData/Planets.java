@@ -28,6 +28,7 @@ public class Planets {
     public static void onPlanetDestroyed(int planet_id) {
         planets.removeIf(p -> p.getId() == planet_id);
         planets_owned.removeIf(p -> p.getId() == planet_id);
+        unhabitable_planets.removeIf(pID -> pID == planet_id);
     }
 
     public static void onPlanetCaptured(int planet_id) {

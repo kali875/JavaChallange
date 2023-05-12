@@ -32,13 +32,12 @@ public class EnemyDataAnalysis
          */
         if (gravityWaveCrossing.getSourceId() != 0) {
 
-            Planet planet = Planets.getPlanetByID(gravityWaveCrossing.getSourceId());
-            if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION)
-            {
-                Planets.onPlanetDestroyed(gravityWaveCrossing.getSourceId());
-                EnemyPlanets.removePlanet(planet);
-            }
-
+            Optional<Planet> result = Controll.game.getWorld().getPlanets().stream()
+                    .filter(planet -> planet.getId() == gravityWaveCrossing.getSourceId())
+                    .findFirst();
+            Planet planet = null;
+            if (result.isPresent()) planet = result.get();
+            else return;
             /**
              * Ha a bolygó elpusztult (MBH robbanás)
              * Ha űrmisszió történt (Általunk küldött misszió esetén ez azt jelenti, hogy sikertelen volt a missziónk)
@@ -54,6 +53,11 @@ public class EnemyDataAnalysis
                 getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getPassivityFleshPrecision());
             } else {
                 getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
+            }
+
+            if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION)
+            {
+                EnemyPlanets.removePlanet(planet);
             }
 
         } else {
@@ -117,7 +121,8 @@ public class EnemyDataAnalysis
             {
                 if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() != JavalessWonders.getCurrentPlayer().getId() )
                 {
-                    EnemyPlanets.putEnemyPlanet(planet);
+                    if (Planets.getPlanetByID(planet.getId()) != null)
+                        EnemyPlanets.putEnemyPlanet(planet);
                 }
             }
         }
@@ -126,6 +131,8 @@ public class EnemyDataAnalysis
     {
         if (EnemyPlanets.isEmpty()) return null;
         if (EnemyPlanets.getTheHighestKey() < frequencyLimit) return null;
-        return EnemyPlanets.getHighestValuedEnemyPlanet();
+        Planet p = EnemyPlanets.getHighestValuedEnemyPlanet();
+        EnemyPlanets.removePlanet(p);
+        return p;
     }
 }

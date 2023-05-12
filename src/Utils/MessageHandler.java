@@ -54,10 +54,6 @@ public class MessageHandler {
 
     private void handleGravityWave(GravityWaveCrossing gravityWaveCrossing) {
         Controll.onGravityWaveCrossingActionEffect(gravityWaveCrossing);
-        if (gravityWaveCrossing.getEffectChain().contains(ActionEffectType.SPACE_MISSION_GRAWITY_WAVE_PASSING)
-                && gameEvent.getActionEffect().getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) {
-            Planets.planetIsUnhabitable(gameEvent.getActionEffect().getAffectedMapObjectId());
-        }
     }
 
     private void handleWormholeBuilt(WormHoleBuiltEffect wormHoleBuiltEffect) {

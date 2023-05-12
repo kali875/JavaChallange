@@ -85,11 +85,12 @@ public class Send
                     System.out.println(response.statusCode());
                     return response;
                 }).thenApply(HttpResponse::body).thenAccept(System.out::println);*/
+                System.out.println("request sent");
                 this.response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                System.out.println("got response");
                 UILogger.log_int(response.statusCode());
                 UILogger.log_string(response.body());
                 //challenge.game.rest.GameKey gameAction = jsonMapper.readValue(response.body(), challenge.game.rest.GameKey.class);
-            test= "asd";
         } catch (IOException e)
         {
             throw new RuntimeException(e);
