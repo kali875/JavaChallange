@@ -70,8 +70,21 @@ public class Controll
         UILogger.log_string("direction: " + Math.toDegrees( actionEffect.getDirection() ));
         UILogger.log_string(".............................................");
 
-        if (actionEffect.getInflictingPlayer() != JavalessWonders.getCurrentPlayer().getId())
+        if (actionEffect.getInflictingPlayer() != JavalessWonders.getCurrentPlayer().getId()) {
             EnemyDataAnalysis.analyzeData(actionEffect);
+        }
+        /*if (actionEffect.getInflictingPlayer() != JavalessWonders.getCurrentPlayer().getId())
+        {
+            //int totalPlanets,                 int numPlayers,             int nonHabitablePlanets,        int ownedPlanets, int destroyedPlanets, int destroyedPlanetScore
+            EnemyDataAnalysis.setFrequencyLimit((int)EnemyPlanetSequenceLimit(Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets()));
+            EnemyDataAnalysis.analyzeData(actionEffect);
+        }
+        else
+        {
+            //setFrequencyLimit                      //int width,                               int length,                              int totalPlanets,                               int numPlayers,                         int nonHabitablePlanets,         int ownedPlanets, int occupiedPlanets, int destroyedPlanetScore
+            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
+            MyDataAnalysis.setFrequencyLimit(normalizeValue(threshold, 0, 1, 1, 100));
+        }*/
 
         if (actionEffect.getCause() == GravityWaveCause.EXPLOSION)
             Planets.onPlanetDestroyed(actionEffect.getSourceId());
@@ -108,7 +121,7 @@ public class Controll
             Planet p = EnemyDataAnalysis.GetEnemyPlanet();
             if (p != null) {
                 for (int i = 0; i < 2; i++)
-                    Bot.MBH.sendMBH(Planets.getPlanets_owned().get(0).getId(), p.getId());
+                    Bot.MBH.sendMBH(Planets.findClosestOwnedPlanetToTarget(p).getId(), p.getId());
                 UILogger.log_string("Possible Enemy planet shot! -> " + p.getId());
                 doingSomething--;
                 return;
@@ -219,5 +232,36 @@ public class Controll
         scatterLimit = Math.max(1, Math.min(100, scatterLimit));
 
         return scatterLimit;
+    }
+
+    public static double calculateDefThreshold(int width, int length, int totalPlanets, int numPlayers, int nonHabitablePlanets, int ownedPlanets, int occupiedPlanets, int destroyedPlanetScore)
+    {
+        double maxPossibleOwned = (double) totalPlanets / numPlayers;
+        double maxPossibleOccupied = (double) totalPlanets - nonHabitablePlanets;
+
+        double ownedMembership = calculateMembership(ownedPlanets, 0, (int) maxPossibleOwned, width, length);
+        double occupiedMembership = calculateMembership(occupiedPlanets, 0, (int) maxPossibleOccupied, width, length);
+        double destroyedMembership = calculateMembership(destroyedPlanetScore, 0, totalPlanets, width, length);
+
+        double threshold = Math.max(Math.max(ownedMembership, occupiedMembership), destroyedMembership);
+        return threshold;
+    }
+
+    public static double calculateMembership(int value, int min, int max, int width, int length) {
+        double membership = 0.0;
+        double scaleFactor = Math.sqrt(width * width + length * length);
+        if (value <= min) {
+            membership = 0.0;
+        } else if (value >= max) {
+            membership = 1.0;
+        } else {
+            membership = (double) (value - min) / (max - min) * scaleFactor;
+        }
+        return membership;
+    }
+
+    public static int normalizeValue(double value, double minValue, double maxValue, int normalizedMin, int normalizedMax) {
+        double normalizedValue = ((value - minValue) / (maxValue - minValue)) * (normalizedMax - normalizedMin) + normalizedMin;
+        return (int) Math.round(normalizedValue);
     }
 }

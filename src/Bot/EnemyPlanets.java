@@ -1,5 +1,6 @@
 package Bot;
 
+import GameData.Planets;
 import challenge.game.model.Planet;
 import org.glassfish.grizzly.utils.Pair;
 import org.glassfish.tyrus.core.uri.internal.MultivaluedHashMap;
@@ -57,6 +58,11 @@ public class EnemyPlanets {
 
     private static void syncMap() {
         enemyPlanets.values().removeIf(List::isEmpty);
+    }
+
+    public static void syncOwnedPlanets() {
+        enemyPlanets.values().removeIf(planet -> planet.removeIf(Planets::ownedPlanetsContains));
+        syncMap();
     }
 
     public static void removePlanet(Planet planet) {

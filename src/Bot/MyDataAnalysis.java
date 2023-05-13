@@ -28,6 +28,11 @@ public class MyDataAnalysis
     {
         return Math.toRadians( (360.0/100)*degree);
     }
+
+    public static void setFrequencyLimit(int frequencyLimit) {
+        EnemyDataAnalysis.frequencyLimit = frequencyLimit;
+    }
+
     public static double DefinesDirection(Planet SrcPlanet, Planet TargetPlanet) {
         long horizontalDistance = TargetPlanet.getX() - SrcPlanet.getX();
         long verticalDistance = TargetPlanet.getY() - SrcPlanet.getY();
@@ -88,7 +93,8 @@ public class MyDataAnalysis
          */
         temp = FindPlanet(gameEvent);
 
-        if(temp != null)
+        if (temp == null) return;
+        if(temp.get(0) != null && temp.get(1) != null)
         {
             Planet TargetPlanet = temp.get(0);
             Planet SrcPlanet = temp.get(1);

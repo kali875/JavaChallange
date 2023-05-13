@@ -103,6 +103,10 @@ public class Planets {
         return new Pair<>(closestPlanets.firstKey(), closestPlanets.get(closestPlanets.firstKey()));
     }
 
+    public static Planet findClosestOwnedPlanetToTarget(Planet target) {
+        return planets_owned.get(findMinimumDistanceBetweenTargetAndOwnedPlanets(target).getSecond());
+    }
+
     private static Pair<Double, Integer> findMinimumDistanceBetweenTargetAndOwnedPlanets(Planet target) {
         double minimum_distance = Double.MAX_VALUE;
         int minimum_distance_id = 0;

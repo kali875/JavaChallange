@@ -17,12 +17,16 @@ import Bot.EnemyPlanets;
 public class EnemyDataAnalysis
 {
     static EnemyPlanets enemyPlanets = new EnemyPlanets();
-    static int frequencyLimit= 2;
+    static int frequencyLimit= 7;
     static double StepLength = 1.0;
     //GravityWaveCrossing
     private static double RadianConverter(int degree)
     {
         return Math.toRadians( (360.0/100)*degree);
+    }
+
+    public static void setFrequencyLimit(int frequencyLimit) {
+        EnemyDataAnalysis.frequencyLimit = frequencyLimit;
     }
     public static void analyzeData(GravityWaveCrossing gravityWaveCrossing)
     {
@@ -31,38 +35,40 @@ public class EnemyDataAnalysis
          * Azon bolygó megkeresése, amely a Gravitációs hullám kiváltó oka volt
          * 0 id statement
          */
-        if (gravityWaveCrossing.getSourceId() != 0) {
 
-            Optional<Planet> result = Controll.game.getWorld().getPlanets().stream()
-                    .filter(planet -> planet.getId() == gravityWaveCrossing.getSourceId())
-                    .findFirst();
-            Planet planet = null;
-            if (result.isPresent()) planet = result.get();
-            else return;
-            /**
-             * Ha a bolygó elpusztult (MBH robbanás)
-             * Ha űrmisszió történt (Általunk küldött misszió esetén ez azt jelenti, hogy sikertelen volt a missziónk)
-             * Ha féreglyuk épült
-             * Ha a hullám passzivitás miatt érkezett
-             * Feldolgozás:
-             * Az irány radiánban érkezik, a szórás mértéke százalékos, ez a fok kivonandó illetve hozzáadandó az irányhoz
-             * Így kapunk egy relatív "körszeletet", amelyet tartalmazó bolgyók egyike volt a hullámot kiváltó bolygó
-             * Majd a lehetséges bolygók felkerülnek az ellenséges bolygók listájára
-             */
+        Optional<Planet> result = Controll.game.getWorld().getPlanets().stream()
+                .filter(planet -> planet.getId() == gravityWaveCrossing.getAffectedMapObjectId())
+                .findFirst();
+        Planet planet = null;
+        if (result.isPresent()) planet = result.get();
+        else return;
+        /**
+         * Ha a bolygó elpusztult (MBH robbanás)
+         * Ha űrmisszió történt (Általunk küldött misszió esetén ez azt jelenti, hogy sikertelen volt a missziónk)
+         * Ha féreglyuk épült
+         * Ha a hullám passzivitás miatt érkezett
+         * Feldolgozás:
+         * Az irány radiánban érkezik, a szórás mértéke százalékos, ez a fok kivonandó illetve hozzáadandó az irányhoz
+         * Így kapunk egy relatív "körszeletet", amelyet tartalmazó bolgyók egyike volt a hullámot kiváltó bolygó
+         * Majd a lehetséges bolygók felkerülnek az ellenséges bolygók listájára
+         */
 
-            if (gravityWaveCrossing.getCause() == GravityWaveCause.PASSIVITY) {
-                getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getPassivityFleshPrecision());
-            } else {
-                getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-            }
-
-            if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION)
-            {
-                EnemyPlanets.removePlanet(planet);
-            }
-
+        if (gravityWaveCrossing.getCause() == GravityWaveCause.PASSIVITY) {
+            getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getPassivityFleshPrecision());
         } else {
-            // itt le kéne kezelni a space mission-öket, idk
+            getPossiblePlanets(gravityWaveCrossing, planet, Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
+        }
+
+        if (gravityWaveCrossing.getCause() == GravityWaveCause.EXPLOSION)
+        {
+            Optional<Planet> exploded_planet = Controll.game.getWorld().getPlanets().stream()
+                    .filter(p -> p.getId() == gravityWaveCrossing.getSourceId())
+                    .findFirst();
+            Planet p = null;
+            if (exploded_planet.isPresent()) {
+                p = exploded_planet.get();
+                EnemyPlanets.removePlanet(p);
+            }
         }
     }
 
@@ -116,13 +122,13 @@ public class EnemyDataAnalysis
 
     public static void SelectEnemyPlanets(List<int[]> cells)
     {
-        for (Planet planet: Planets.getPlanets())
+        for (Planet planet: Controll.game.getWorld().getPlanets())
         {
             for (int[] cel :cells)
             {
-                if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() != JavalessWonders.getCurrentPlayer().getId() )
+                if(planet.getY() == cel[1] && planet.getX() == cel[0])
                 {
-                    if (Planets.getPlanetByID(planet.getId()) != null)
+                    if (Planets.getPlanetByID(planet.getId()) != null && !Planets.ownedPlanetsContains(planet))
                         EnemyPlanets.putEnemyPlanet(planet);
                 }
             }
@@ -130,6 +136,8 @@ public class EnemyDataAnalysis
     }
     public static Planet GetEnemyPlanet()
     {
+        if (EnemyPlanets.isEmpty()) return null;
+        EnemyPlanets.syncOwnedPlanets();
         if (EnemyPlanets.isEmpty()) return null;
         EnemyPlanets.logContainer();
         if (EnemyPlanets.getTheHighestKey() < frequencyLimit) return null;
