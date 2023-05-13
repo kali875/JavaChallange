@@ -82,7 +82,8 @@ public class Controll
 
     public static void setLastAction(GameAction action, Planet planet) {lastAction = new Pair<>(action, planet);}
 
-    private static void doSomething() {
+    private static void doSomething()
+    {
         if (Actions.getRemainingActionCount() < 1) return;
         if (Actions.getRemainingActionCount() > 1) {
             Planet p = EnemyDataAnalysis.GetEnemyPlanet();
@@ -111,5 +112,56 @@ public class Controll
             GameAction action = Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst().getId(), closestPlanet.getSecond().getSecond().getId());
             setLastAction(action, closestPlanet.getSecond().getSecond());
         }
+    }
+    public static double calculateScatterLimit(int totalPlanets, int numPlayers, int nonHabitablePlanets, int ownedPlanets, int destroyedPlanets)
+    {
+        // Fuzzy freq limit calculation
+        double habitablePlanetsRatio = (double) (totalPlanets - nonHabitablePlanets - destroyedPlanets) / totalPlanets;
+        double ownedPlanetsRatio = (double) ownedPlanets / totalPlanets;
+
+        // Fuzzy rule def
+        double lowRatio = Math.min(habitablePlanetsRatio, ownedPlanetsRatio);
+        double mediumRatio = Math.max(0, Math.min(habitablePlanetsRatio, 1 - ownedPlanetsRatio));
+        double highRatio = Math.max(0, Math.min(1 - habitablePlanetsRatio, 1 - ownedPlanetsRatio));
+
+        // Fuzzy freq limit values cal
+        double lowLimit = lowRatio * numPlayers;
+        double mediumLimit = mediumRatio * numPlayers;
+        double highLimit = highRatio * numPlayers;
+
+        // median
+        double scatterLimit = (lowLimit + mediumLimit + highLimit) / 3;
+
+        // between 1-100
+        scatterLimit = Math.max(1, Math.min(100, scatterLimit));
+
+        return scatterLimit;
+    }
+    public static double EnemyPlanetSequenceLimit(int totalPlanets, int numPlayers, int nonHabitablePlanets, int ownedPlanets, int destroyedPlanets, int destroyedPlanetScore)
+    {
+        // Fuzzy freq limit calculation
+        double habitablePlanetsRatio = (double) (totalPlanets - nonHabitablePlanets - destroyedPlanets) / totalPlanets;
+        double ownedPlanetsRatio = (double) ownedPlanets / totalPlanets;
+
+        // Fuzzy rule def
+        double lowRatio = Math.min(habitablePlanetsRatio, ownedPlanetsRatio);
+        double mediumRatio = Math.max(0, Math.min(habitablePlanetsRatio, 1 - ownedPlanetsRatio));
+        double highRatio = Math.max(0, Math.min(1 - habitablePlanetsRatio, 1 - ownedPlanetsRatio));
+
+        // Fuzzy freq limit values cal
+        double lowLimit = lowRatio * numPlayers;
+        double mediumLimit = mediumRatio * numPlayers;
+        double highLimit = highRatio * numPlayers;
+
+        // get Score the destroy planet
+        double scoreFactor = 1 + (destroyedPlanets * destroyedPlanetScore);
+
+        // median calculation
+        double scatterLimit = (lowLimit + mediumLimit + highLimit) / 3 * scoreFactor;
+
+        // between 1-100
+        scatterLimit = Math.max(1, Math.min(100, scatterLimit));
+
+        return scatterLimit;
     }
 }
