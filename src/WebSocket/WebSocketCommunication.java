@@ -1,5 +1,6 @@
 package WebSocket;
 
+import Bot.Controll;
 import Utils.MessageHandler;
 import GameData.Actions;
 import Utils.UILogger;
@@ -48,6 +49,7 @@ public class WebSocketCommunication
             String message = objectMapper.writeValueAsString(gameAction);
             websocket_session.getAsyncRemote().sendText(message);
             Actions.onActionUsed();
+            Controll.Commands.add(gameAction);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

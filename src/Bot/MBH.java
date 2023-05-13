@@ -19,7 +19,6 @@ public class MBH
         action.setTargetId(target_planet_id);
         action.setOriginId(start_planet_id);
         action.setRefId(randomNumber);
-        Controll.Commands.add(action);
         WebSocketCommunication.sendGameAction(action);
         return action;
     }

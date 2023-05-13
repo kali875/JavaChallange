@@ -1,7 +1,9 @@
 package Bot;
 
+import GameData.OnGoingSpaceMissions;
 import WebSocket.WebSocketCommunication;
 import challenge.game.event.action.SpaceMissionAction;
+import challenge.game.model.Planet;
 
 import java.util.Random;
 
@@ -16,15 +18,17 @@ public class SpaceMission
 
     }
 
-    public static SpaceMissionAction sendSpaceMission(int start_planet_id, int target_planet_id) {
+    public static SpaceMissionAction sendSpaceMission(Planet originalPlanet, Planet targetPlanet) {
         Random random = new Random();
         int randomNumber = random.nextInt(89999) + 10000;
         SpaceMissionAction action = new SpaceMissionAction();
-        action.setOriginId(start_planet_id);
+        action.setOriginId(originalPlanet.getId());
         action.setRefId(randomNumber);
-        action.setTargetId(target_planet_id);
-        Controll.Commands.add(action);
+        action.setTargetId(targetPlanet.getId());
+
+        OnGoingSpaceMissions.onSpaceMission(originalPlanet, targetPlanet);
         WebSocketCommunication.sendGameAction(action);
+
         return action;
     }
 }

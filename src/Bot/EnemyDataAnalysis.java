@@ -131,9 +131,16 @@ public class EnemyDataAnalysis
     public static Planet GetEnemyPlanet()
     {
         if (EnemyPlanets.isEmpty()) return null;
+        EnemyPlanets.logContainer();
         if (EnemyPlanets.getTheHighestKey() < frequencyLimit) return null;
         Planet p = EnemyPlanets.getHighestValuedEnemyPlanet();
         EnemyPlanets.removePlanet(p);
         return p;
+    }
+
+    public static boolean isThereEnemyWithHighChance() {
+        if (EnemyPlanets.isEmpty()) return false;
+        if (EnemyPlanets.getTheHighestKey() >= frequencyLimit * 1.5) return true;
+        return false;
     }
 }

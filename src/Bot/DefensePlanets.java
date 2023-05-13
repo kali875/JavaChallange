@@ -9,7 +9,7 @@ public class DefensePlanets
     static HashMap<Integer, List<Planet>> defPlanets = new HashMap<>();
 
     public static void putEndangeredPlanet(Planet planet) {
-        if (containsValue(planet)) {
+        if (containsValue(planet.getId())) {
             int previousKey = 0;
             for (Map.Entry<Integer, List<Planet>> entry : defPlanets.entrySet()) {
                 if (entry.getValue().contains(planet)) {
@@ -36,10 +36,10 @@ public class DefensePlanets
         }
     }
 
-    private static boolean containsValue(Planet planet) {
+    private static boolean containsValue(int planet_id) {
         for (List<Planet> planets : defPlanets.values())
             for (Planet p : planets)
-                if (p.getId() == planet.getId()) return true;
+                if (p.getId() == planet_id) return true;
         return false;
     }
 
@@ -58,14 +58,11 @@ public class DefensePlanets
         defPlanets.values().removeIf(List::isEmpty);
     }
 
-    public static void removePlanet(Planet planet) {
-        if (containsValue(planet)) {
-            for (Map.Entry<Integer, List<Planet>> entry : defPlanets.entrySet()) {
-                if (entry.getValue().contains(planet)) {
-                    entry.getValue().remove(planet);
-                    syncMap();
-                    return;
-                }
+    public static void removePlanet(int planet_id) {
+        for (Map.Entry<Integer, List<Planet>> entry : defPlanets.entrySet()) {
+            if (entry.getValue().removeIf(p -> p.getId() == planet_id)) {
+                syncMap();
+                return;
             }
         }
     }

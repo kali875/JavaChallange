@@ -50,7 +50,7 @@ public class MyDataAnalysis
                     {
                         if(gw.getSourceId() == value.getTargetId() && gw.getAffectedMapObjectId() == ((ShootMBHAction) value).getOriginId())
                         {
-                            System.out.println("Valszeg a mi lővésünkre válasz: " + gw.getSourceId() + " " + ((ShootMBHAction) value).getOriginId());
+                            //System.out.println("Valszeg a mi lővésünkre válasz: " + gw.getSourceId() + " " + ((ShootMBHAction) value).getOriginId());
                             return addPlanetsToList(temp, value, idx);
                         }
                     }
@@ -108,7 +108,7 @@ public class MyDataAnalysis
         }
         else
         {
-            System.out.println("null src, targetid ");
+            //System.out.println("null src, targetid ");
         }
 
     }
@@ -174,10 +174,11 @@ public class MyDataAnalysis
             }
         }
     }
-    public static Planet GetDefPlanet()
+    public static Planet getDefPlanet()
     {
         if (DefensePlanets.isEmpty()) return null;
 
+        //System.out.println("DefensePlanets.getTheHighestKey(): " + DefensePlanets.getTheHighestKey());
         if(DefensePlanets.getTheHighestKey() > frequencyLimit)
         {
             return DefensePlanets.getHighestValuedEndangeredPlanet();

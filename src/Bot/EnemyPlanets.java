@@ -1,6 +1,7 @@
 package Bot;
 
 import challenge.game.model.Planet;
+import org.glassfish.grizzly.utils.Pair;
 import org.glassfish.tyrus.core.uri.internal.MultivaluedHashMap;
 
 import java.util.*;
@@ -72,5 +73,15 @@ public class EnemyPlanets {
 
     public static boolean isEmpty() {
         return enemyPlanets.isEmpty();
+    }
+
+    public static void logContainer() {
+        for(Map.Entry<Integer, List<Planet>> entry : enemyPlanets.entrySet()) {
+            StringBuilder text = new StringBuilder(String.valueOf(entry.getKey()) + ": ");
+            for (Planet planet : entry.getValue()) {
+                text.append(" ").append(planet.getId());
+            }
+            System.out.println(text);
+        }
     }
 }

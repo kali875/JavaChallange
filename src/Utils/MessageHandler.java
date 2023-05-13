@@ -3,6 +3,7 @@ package Utils;
 import Bot.Controll;
 import GameData.Actions;
 import GameData.JavalessWonders;
+import GameData.OnGoingSpaceMissions;
 import GameData.Planets;
 import challenge.game.event.EventType;
 import challenge.game.event.GameEvent;
@@ -14,8 +15,11 @@ import challenge.game.event.actioneffect.GravityWaveCrossing;
 import challenge.game.event.actioneffect.WormHoleBuiltEffect;
 import challenge.game.event.attibute.AttributeChanges;
 import challenge.game.model.Game;
+import challenge.game.model.Planet;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+
+import java.util.Calendar;
 
 public class MessageHandler {
     public MessageHandler() {}
@@ -24,6 +28,7 @@ public class MessageHandler {
     public void handleMessage(String message) {
         try {
             gameEvent = jsonMapper.readValue(message, GameEvent.class);
+            Controll.onGameEvent(gameEvent);
 
             if (gameEvent.getEventType() == EventType.GAME_STARTED) {
                 handleGameStarted(gameEvent.getGame());
@@ -36,10 +41,10 @@ public class MessageHandler {
             } else if (gameEvent.getEventType() == EventType.ATTRIBUTE_CHANGE) {
                 handleAttributeChange(gameEvent.getChanges());
             } else if (gameEvent.getEventType() == EventType.ACTION_EFFECT) {
-                if (gameEvent.getActionEffect() instanceof GravityWaveCrossing) {
-                    handleGravityWave((GravityWaveCrossing) gameEvent.getActionEffect());
-                } else if (gameEvent.getActionEffect() instanceof WormHoleBuiltEffect) {
-                    handleWormholeBuilt((WormHoleBuiltEffect) gameEvent.getActionEffect());
+                if (gameEvent.getActionEffect() instanceof GravityWaveCrossing gw) {
+                    handleGravityWave(gw);
+                } else if (gameEvent.getActionEffect() instanceof WormHoleBuiltEffect wb) {
+                    handleWormholeBuilt(wb);
                 } else {
                     handleActionEffect(gameEvent.getActionEffect());
                 }
@@ -48,7 +53,7 @@ public class MessageHandler {
                 System.out.println(message);
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            UILogger.log_string(message);
         }
     }
 
@@ -90,10 +95,22 @@ public class MessageHandler {
         } else {
             String value = new AttributeChangeChecker(attributeChanges.getChanges()).contains("numberOfRemainingActions");
             if (!value.equals("false")) {
-                Actions.onActionAttributeChange(Integer.valueOf(value));
-                if (Controll.getLastAction().getFirst().getType() == GameActionType.SPACE_MISSION) {
-                    if (!Planets.getPlanets_owned().contains(Controll.getLastAction().getSecond())) {
-                        Planets.planetIsUnhabitable(Controll.getLastAction().getSecond().getId());
+                int newActionCount = Integer.parseInt(value);
+
+                if (newActionCount > Actions.getRemainingActionCount() && Controll.gameStarted) {
+                    Actions.onActionAttributeChange(newActionCount);
+
+                    do Controll.doSomething();
+                    while (Actions.getRemainingActionCount() - Controll.doingSomething > 3);
+                }
+                if (newActionCount == 0 && !Controll.gameStarted) Controll.gameStarted = true;
+
+                Planet target = OnGoingSpaceMissions.onActionReplenished(Calendar.getInstance().getTimeInMillis());
+                if (target != null) {
+                    if (new AttributeChangeChecker(attributeChanges.getChanges()).contains("numOfOwnedPlanets").equals("false")) {
+                        if (!Planets.ownedPlanetsContains(target)) {
+                            Planets.planetIsUnhabitable(target);
+                        }
                     }
                 }
             }
