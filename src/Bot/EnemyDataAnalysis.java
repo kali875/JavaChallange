@@ -29,6 +29,7 @@ public class EnemyDataAnalysis
 
         /**
          * Azon bolygó megkeresése, amely a Gravitációs hullám kiváltó oka volt
+         * 0 id statement
          */
         if (gravityWaveCrossing.getSourceId() != 0) {
 

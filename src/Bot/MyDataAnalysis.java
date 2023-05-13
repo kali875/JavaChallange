@@ -39,10 +39,34 @@ public class MyDataAnalysis
     }
     public static List<Planet> FindPlanet(GameEvent GameEvent)
     {
+        int idx = 0;
         List<Planet> temp = new ArrayList<Planet>();
         Planet SourcePlanet = null;
         Planet TargetPlanet = null;
+        if (GameEvent.getActionEffect() instanceof GravityWaveCrossing)
+        {
+            GravityWaveCrossing gw = (GravityWaveCrossing) GameEvent.getActionEffect();
+            if( gw.getCause() == GravityWaveCause.EXPLOSION)
+            {
 
+                for (GameAction value:Controll.Commands)
+                {
+                    if(value instanceof ShootMBHAction)
+                    {
+                        if(gw.getSourceId() == value.getTargetId() && gw.getAffectedMapObjectId() == ((ShootMBHAction) value).getOriginId())
+                        {
+                            System.out.println("Valszeg a mi lővésünkre válasz:"+gw.getSourceId()+" "+((ShootMBHAction) value).getOriginId());
+                            temp.add(Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == ((ShootMBHAction) value).getTargetId()).findFirst().orElse(null));
+                            temp.add(Planets.getPlanets_owned().stream().filter(Planet -> Planet.getId() == ((ShootMBHAction) value).getOriginId()).findFirst().orElse(null));
+                            Controll.Commands.remove(idx);
+                            return temp;
+                        }
+                    }
+                    idx++;
+                }
+            }
+        }
+        idx=0;
         for (GameAction value:Controll.Commands)
         {
             if(value.getTargetId() == GameEvent.getActionEffect().getAffectedMapObjectId())
@@ -51,9 +75,10 @@ public class MyDataAnalysis
                 {
 
                     ShootMBHAction shoot = (ShootMBHAction)value;
+
                     temp.add(Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == shoot.getTargetId()).findFirst().orElse(null));
                     temp.add(Planets.getPlanets_owned().stream().filter(Planet -> Planet.getId() == ((ShootMBHAction) value).getOriginId()).findFirst().orElse(null));
-
+                    Controll.Commands.remove(idx);
                     return temp;
                 }
                 else if(value instanceof SpaceMissionAction)
@@ -61,10 +86,11 @@ public class MyDataAnalysis
                     SpaceMissionAction mission = (SpaceMissionAction)value;
                     temp.add( Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == mission.getTargetId()).findFirst().orElse(null));
                     temp.add( Planets.getPlanets_owned().stream().filter(Planet -> Planet.getId() == ((SpaceMissionAction) value).getOriginId()).findFirst().orElse(null));
-
+                    Controll.Commands.remove(idx);
                     return temp;
                 }
             }
+            idx++;
         }
         return null;
     }
