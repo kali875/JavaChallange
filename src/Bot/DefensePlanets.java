@@ -1,45 +1,69 @@
 package Bot;
 
 import challenge.game.model.Planet;
-import org.glassfish.tyrus.core.uri.internal.MultivaluedHashMap;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DefensePlanets
 {
-    static MultivaluedHashMap<Integer, Planet> DefPlanets = new MultivaluedHashMap<>();
+    static HashMap<Integer, List<Planet>> defPlanets = new HashMap<>();
 
-    public static void putEnemyPlanet(Planet planet) {
-        if (DefPlanets.containsValue(planet)) {
+    public static void putEndangeredPlanet(Planet planet) {
+        if (containsValue(planet)) {
             int previousKey = 0;
-            for (Map.Entry<Integer, List<Planet>> entry : DefPlanets.entrySet()) {
+            for (Map.Entry<Integer, List<Planet>> entry : defPlanets.entrySet()) {
                 if (entry.getValue().contains(planet)) {
                     entry.getValue().remove(planet);
                     previousKey = entry.getKey();
                     break;
                 }
             }
-            DefPlanets.add(previousKey + 1, planet);
+            if (defPlanets.containsKey(previousKey + 1)) {
+                defPlanets.get(previousKey + 1).add(planet);
+            } else {
+                List<Planet> temp_list = new ArrayList<>();
+                temp_list.add(planet);
+                defPlanets.put(previousKey + 1, temp_list);
+            }
         } else {
-            DefPlanets.add(0, planet);
+            if (defPlanets.containsKey(0)) {
+                defPlanets.get(0).add(planet);
+            } else {
+                List<Planet> temp_list = new ArrayList<>();
+                temp_list.add(planet);
+                defPlanets.put(0, temp_list);
+            }
         }
     }
 
-    public static int getTheHighestKey() {
-        return Collections.max(DefPlanets.keySet());
+    private static boolean containsValue(Planet planet) {
+        for (List<Planet> planets : defPlanets.values())
+            for (Planet p : planets)
+                if (p.getId() == planet.getId()) return true;
+        return false;
     }
 
-    public static Planet getHighestValuedEnemyPlanet() {
-        return DefPlanets.get(getTheHighestKey()).get(0);
+    public static int getTheHighestKey() {
+        return Collections.max(defPlanets.keySet());
+    }
+
+    public static Planet getHighestValuedEndangeredPlanet() {
+        for (Planet p : defPlanets.get(getTheHighestKey())) {
+            return p;
+        }
+        return null;
+    }
+
+    private static void syncMap() {
+        defPlanets.values().removeIf(List::isEmpty);
     }
 
     public static void removePlanet(Planet planet) {
-        if (DefPlanets.containsValue(planet)) {
-            for (Map.Entry<Integer, List<Planet>> entry : DefPlanets.entrySet()) {
+        if (containsValue(planet)) {
+            for (Map.Entry<Integer, List<Planet>> entry : defPlanets.entrySet()) {
                 if (entry.getValue().contains(planet)) {
                     entry.getValue().remove(planet);
+                    syncMap();
                     return;
                 }
             }
@@ -47,6 +71,6 @@ public class DefensePlanets
     }
 
     public static boolean isEmpty() {
-        return DefPlanets.isEmpty();
+        return defPlanets.isEmpty();
     }
 }

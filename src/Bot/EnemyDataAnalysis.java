@@ -22,7 +22,7 @@ public class EnemyDataAnalysis
     //GravityWaveCrossing
     private static double RadianConverter(int degree)
     {
-        return Math.toRadians( (360/100)*degree);
+        return Math.toRadians( (360.0/100)*degree);
     }
     public static void analyzeData(GravityWaveCrossing gravityWaveCrossing)
     {

@@ -18,48 +18,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static Bot.DefensePlanets.DefPlanets;
-
 public class MyDataAnalysis
 {
-    static List<Planet> temp = new ArrayList<Planet>();
+    static List<Planet> temp = new ArrayList<>();
     static int frequencyLimit= 5;
-    static double StepLength = 1.0;
+    static double stepLength = 1.0;
     //GravityWaveCrossing
     private static double RadianConverter(int degree)
     {
-        return Math.toRadians( (360/100)*degree);
+        return Math.toRadians( (360.0/100)*degree);
     }
     public static double DefinesDirection(Planet SrcPlanet, Planet TargetPlanet) {
-        long Horitontaldistance = TargetPlanet.getX() - SrcPlanet.getX();
-        long VerticalDistance = TargetPlanet.getY() - SrcPlanet.getY();
-        double rad = Math.atan2(VerticalDistance, Horitontaldistance);
+        long horizontalDistance = TargetPlanet.getX() - SrcPlanet.getX();
+        long verticalDistance = TargetPlanet.getY() - SrcPlanet.getY();
 
-        return rad;
+        return Math.atan2(verticalDistance, horizontalDistance);
     }
-    public static List<Planet> FindPlanet(GameEvent GameEvent)
+    public static List<Planet> FindPlanet(GameEvent gameEvent)
     {
         int idx = 0;
-        List<Planet> temp = new ArrayList<Planet>();
-        Planet SourcePlanet = null;
-        Planet TargetPlanet = null;
-        if (GameEvent.getActionEffect() instanceof GravityWaveCrossing)
+        List<Planet> temp = new ArrayList<>();
+
+        if (gameEvent.getActionEffect() instanceof GravityWaveCrossing gw)
         {
-            GravityWaveCrossing gw = (GravityWaveCrossing) GameEvent.getActionEffect();
             if( gw.getCause() == GravityWaveCause.EXPLOSION)
             {
 
-                for (GameAction value:Controll.Commands)
+                for (GameAction value : Controll.Commands)
                 {
                     if(value instanceof ShootMBHAction)
                     {
                         if(gw.getSourceId() == value.getTargetId() && gw.getAffectedMapObjectId() == ((ShootMBHAction) value).getOriginId())
                         {
-                            System.out.println("Valszeg a mi lővésünkre válasz:"+gw.getSourceId()+" "+((ShootMBHAction) value).getOriginId());
-                            temp.add(Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == ((ShootMBHAction) value).getTargetId()).findFirst().orElse(null));
-                            temp.add(Planets.getPlanets_owned().stream().filter(Planet -> Planet.getId() == ((ShootMBHAction) value).getOriginId()).findFirst().orElse(null));
-                            Controll.Commands.remove(idx);
-                            return temp;
+                            System.out.println("Valszeg a mi lővésünkre válasz: " + gw.getSourceId() + " " + ((ShootMBHAction) value).getOriginId());
+                            return addPlanetsToList(temp, value, idx);
                         }
                     }
                     idx++;
@@ -67,39 +59,34 @@ public class MyDataAnalysis
             }
         }
         idx=0;
-        for (GameAction value:Controll.Commands)
+        for (GameAction value : Controll.Commands)
         {
-            if(value.getTargetId() == GameEvent.getActionEffect().getAffectedMapObjectId())
-            {
-                if(value instanceof ShootMBHAction)
-                {
-
-                    ShootMBHAction shoot = (ShootMBHAction)value;
-
-                    temp.add(Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == shoot.getTargetId()).findFirst().orElse(null));
-                    temp.add(Planets.getPlanets_owned().stream().filter(Planet -> Planet.getId() == ((ShootMBHAction) value).getOriginId()).findFirst().orElse(null));
-                    Controll.Commands.remove(idx);
-                    return temp;
-                }
-                else if(value instanceof SpaceMissionAction)
-                {
-                    SpaceMissionAction mission = (SpaceMissionAction)value;
-                    temp.add( Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == mission.getTargetId()).findFirst().orElse(null));
-                    temp.add( Planets.getPlanets_owned().stream().filter(Planet -> Planet.getId() == ((SpaceMissionAction) value).getOriginId()).findFirst().orElse(null));
-                    Controll.Commands.remove(idx);
-                    return temp;
-                }
-            }
+            if(value.getTargetId() == gameEvent.getActionEffect().getAffectedMapObjectId())
+                return addPlanetsToList(temp, value, idx);
             idx++;
         }
         return null;
     }
-    public static void analData(GameEvent GameEvent)
+
+    private static List<Planet> addPlanetsToList(List<Planet> temp, GameAction action, int idx) {
+        temp.add(Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == action.getTargetId()).findFirst().orElse(null));
+        temp.add(Planets.getPlanets_owned().stream()
+                .filter(
+                        planet -> {
+                            if (action instanceof SpaceMissionAction) return planet.getId() == ((SpaceMissionAction) action).getOriginId();
+                            return planet.getId() == ((ShootMBHAction) action).getOriginId();
+                        }
+        ).findFirst().orElse(null));
+        Controll.Commands.remove(idx);
+        return temp;
+    }
+
+    public static void analData(GameEvent gameEvent)
     {
         /**
          * Azon saját bolygónk mérlegelése az kimenő adatok alapján
          */
-        temp = FindPlanet(GameEvent);
+        temp = FindPlanet(gameEvent);
 
         if(temp != null)
         {
@@ -107,25 +94,16 @@ public class MyDataAnalysis
             Planet SrcPlanet = temp.get(1);
             double rad = DefinesDirection(SrcPlanet,TargetPlanet);
 
-            for ( ActionEffectType type:GameEvent.getActionEffect().getEffectChain())
+            for ( ActionEffectType type : gameEvent.getActionEffect().getEffectChain())
             {
-                switch (type)
-                {
-                    case INACTIVITY_FLARE_START:
-                        getPossiblePlanets(rad,TargetPlanet,Controll.game.getSettings().getPassivityFleshPrecision());
-                        break;
-                    case SPACE_MISSION_GRAWITY_WAVE_START:
-                        getPossiblePlanets(rad,TargetPlanet,Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-                        break;
-                    case SPACE_MISSION_DESTROYED:
-                        getPossiblePlanets(rad,TargetPlanet,Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-                        break;
-                    case WORM_HOLE_BUILT_GRAWITY_WAVE_START:
-                        getPossiblePlanets(rad,TargetPlanet,Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
-                        break;
+                switch (type) {
+                    case INACTIVITY_FLARE_START ->
+                            getPossiblePlanets(rad, TargetPlanet, Controll.game.getSettings().getPassivityFleshPrecision());
+                    case SPACE_MISSION_GRAWITY_WAVE_START, SPACE_MISSION_DESTROYED, WORM_HOLE_BUILT_GRAWITY_WAVE_START ->
+                            getPossiblePlanets(rad, TargetPlanet, Controll.game.getSettings().getGravityWaveSourceLocationPrecision());
                 }
             }
-            System.out.println("Gyüjtött palnéták száma: "+ DefPlanets.size());
+            // System.out.println("Gyüjtött palnéták száma: "+ DefPlanets.size());
             //System.out.println(Planets.getPlanets_owned().size());
         }
         else
@@ -167,8 +145,8 @@ public class MyDataAnalysis
             possibleCells.add(new int[]{(int) current_row, (int) current_column});
 
             // Lépés az x és y komponensekkel
-            current_row += startPosition.getSecond() * StepLength;
-            current_column += startPosition.getFirst() * StepLength;
+            current_row += startPosition.getSecond() * stepLength;
+            current_column += startPosition.getFirst() * stepLength;
             if (checkForDirectionChange(endPosition.getFirst(), endPosition.getSecond(), current_row, current_column)) {
                 break;
             }
@@ -191,7 +169,7 @@ public class MyDataAnalysis
             {
                 if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId() )
                 {
-                    DefensePlanets.putDefPlanet(planet);
+                    DefensePlanets.putEndangeredPlanet(planet);
                 }
             }
         }
@@ -202,9 +180,9 @@ public class MyDataAnalysis
 
         if(DefensePlanets.getTheHighestKey() > frequencyLimit)
         {
-            return DefensePlanets.getHighestValuedDefPlanet();
+            return DefensePlanets.getHighestValuedEndangeredPlanet();
         }
         return null;
     }
-    
+
 }
