@@ -1,10 +1,11 @@
 import Bot.Controll;
-import GameData.OnGoingMBHShots;
 import GameData.Planets;
 import RestAPI.API.Send;
 import RestAPI.Model.Parameter;
 import RestAPI.Properties.Config;
 import RestAPI.Response.GameID;
+import Utils.ConnectionHandler;
+import Utils.ExistingGameIDParser;
 import Utils.UILogger;
 import WebSocket.WebSocketCommunication;
 import challenge.game.rest.GameKey;
@@ -27,147 +28,44 @@ import java.util.List;
 
 public class Main
 {
-    ObjectMapper mapper = new ObjectMapper();
-    private JsonMapper jsonMapper= new JsonMapper();
-    private JButton createGameKeyButton;
-    private JButton createGameButton;
-    private JTextField GameKeytextField;
+    private JTextField GameKeyTextField;
     private JTextArea logTextArea;
     private JPanel container;
     private JTabbedPane tabbedPane;
     private JPanel outer_container;
     private JPanel inner_container;
     private JLabel heartbeat;
-    private JButton websocketButton;
     private JButton startGameButton;
     private JPanel GamePlace;
     private JButton stopGameButton;
-    private GameID gameID;
-    private GameKey game;
+    private JButton emergencyStopButton;
+    private JButton reconnectButton;
 
-    private UILogger logger = new UILogger();
+    private final ConnectionHandler connectionHandler = new ConnectionHandler();
 
-    private Controll controll = new Controll();
+    private final UILogger logger = new UILogger();
+
+    private final Controll controll = new Controll();
     public Main()
     {
-        //GameGridLayout GameGridLayout = new GameGridLayout(200,200);
-        //{"httpStatusCode":200,"key":"229c4353-b059-4204-8673-dc65ed0ef0cd","message":"The game key has been successfully generated."}
-        createGameKeyButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                List<Parameter> Parameters = new ArrayList<Parameter>();
-                Config conf = null;
-                try {
-                    conf = new Config();
-                    Parameters.add(new Parameter("email", conf.GetProperty("Email").toString()));
-                    Parameters.add(new Parameter("team", conf.GetProperty("Team").toString()));
-                    Parameters.add(new Parameter("ts", String.valueOf(System.currentTimeMillis())));
-
-                    //conf.GetProperty("BaseURL").toString()
-                    Send send = new Send(Parameters,conf.GetProperty("BaseURL").toString());
-
-                    send.GetGameKey();
-
-
-                    /*Thread t = new Thread(send);
-                    t.start();
-
-                    t.join();*/
-
-                    if(send.response != null)//responsecode == 200
-                    {
-                        game = jsonMapper.readValue(send.response.body().toString(), GameKey.class);
-                        GameKeytextField.setText(game.getKey());
-                    }
-
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                } catch (InterruptedException ex) {
-                    throw new RuntimeException(ex);
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-
-            }
-        });
-
-        createGameButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                try
-                {
-                    Config conf = null;
-                    conf = new Config();
-
-                    String url = conf.GetProperty("CreateGame").toString()+GameKeytextField.getText()+"?disableInactivityWaves=false";
-                    Send send = new Send(url,GameKeytextField.getText());
-                    send.CreateGame("json");
-                    if(send.response != null) {
-                        gameID = jsonMapper.readValue(send.response.body(), GameID.class);
-                    }
-                } catch (IOException ex)
-                {
-
-                    throw new RuntimeException(ex);
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        });
-
-        websocketButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    // ws://javachallenge.loxon.eu:8081/game?gameId=340bbe66-b1ab-4469-8b07-5bad3e022fb5&gameKey=cb5bc49e-3029-470b-b863-eb56bf6ad8cc&connectionType=visualization
-                    String websocket_uri_string = "ws://javachallenge.loxon.eu:8081/game?gameId=" + gameID.getGameId() + "&gameKey=" + GameKeytextField.getText() + "&connectionType=control";
-                    UILogger.log_string("Websocket URI was created:\n" + websocket_uri_string);
-                    URI websocket_uri = null;
-                    websocket_uri = new URI(websocket_uri_string);
-                    WebSocketCommunication.connect(websocket_uri);
-                } catch (URISyntaxException ex) {
-                    throw new RuntimeException(ex);
-                } catch (DeploymentException ex) {
-                    throw new RuntimeException(ex);
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-
-            }
-        });
-
         startGameButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    Send send = new Send("http://javachallenge.loxon.eu:8081/game/start/" + gameID.getGameId() + "/" + game.getKey(), "");
-                    send.startGame();
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
+            public void actionPerformed(ActionEvent e) {connectionHandler.handleGameStart(GameKeyTextField);}
         });
         stopGameButton.addActionListener(new ActionListener()
         {
             @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                Send send = null;
-                try {
-                    send = new Send("http://javachallenge.loxon.eu:8081/game/stop/" + gameID.getGameId() + "/" + game.getKey(), "");
-                    send.stopGame();
-                    UILogger.log_string("Ennyi lakhatatlan bolygót találtam: " + Planets.unhabitable_planets.size());
-                    UILogger.log_string("Ennyi lakható bolygót foglaltam be: " + Planets.getPlanets_owned().size());
-                    UILogger.log_int(Controll.game.getPlayers().size());
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
+            public void actionPerformed(ActionEvent e) {connectionHandler.stopGame();}
+        });
 
-            }
+        reconnectButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {connectionHandler.handleReconnect(GameKeyTextField);}
+        });
+
+        emergencyStopButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {connectionHandler.handleEmergencyStop(GameKeyTextField);}
         });
     }
     public static void main(String[] args)

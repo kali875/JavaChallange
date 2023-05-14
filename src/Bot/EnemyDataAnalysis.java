@@ -17,7 +17,7 @@ import Bot.EnemyPlanets;
 public class EnemyDataAnalysis
 {
     static EnemyPlanets enemyPlanets = new EnemyPlanets();
-    static int frequencyLimit= 7;
+    static int frequencyLimit= 9;
     static double StepLength = 1.0;
     //GravityWaveCrossing
     private static double RadianConverter(int degree)
@@ -139,7 +139,7 @@ public class EnemyDataAnalysis
         if (EnemyPlanets.isEmpty()) return null;
         EnemyPlanets.syncOwnedPlanets();
         if (EnemyPlanets.isEmpty()) return null;
-        EnemyPlanets.logContainer();
+        //EnemyPlanets.logContainer();
         if (EnemyPlanets.getTheHighestKey() < frequencyLimit) return null;
         Planet p = EnemyPlanets.getHighestValuedEnemyPlanet();
         EnemyPlanets.removePlanet(p);

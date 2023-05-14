@@ -18,7 +18,7 @@ public class WebSocketCommunication
 {
     int planets_destroyed = 0;
     private JsonMapper jsonMapper= new JsonMapper();
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private static Session websocket_session;
     @OnOpen
     public void onOpen(Session session) {
@@ -38,10 +38,10 @@ public class WebSocketCommunication
 
     }
 
-    public static void connect(URI websocket_uri) throws IOException, DeploymentException
+    public static boolean connect(URI websocket_uri) throws IOException, DeploymentException
     {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        container.connectToServer(WebSocketCommunication.class, websocket_uri);
+        return container.connectToServer(WebSocketCommunication.class, websocket_uri).isOpen();
     }
 
     public static void sendGameAction(GameAction gameAction) {
