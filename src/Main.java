@@ -55,7 +55,6 @@ public class Main
     private final ConnectionHandler connectionHandler = new ConnectionHandler();
     private JTable GameWorld;
     private JScrollPane JtableScroll;
-    private JPanel TextAreaJPane;
     private GameID gameID;
     private GameKey game;
 
@@ -66,15 +65,24 @@ public class Main
     {
         startGameButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {connectionHandler.handleGameStart(GameKeyTextField);}
-/*        GamePlace = new JPanel(null);
+            public void actionPerformed(ActionEvent e) {
+                connectionHandler.handleGameStart(GameKeyTextField);
+                try {
+                    FillPlanet();
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+
+        GamePlace = new JPanel(null);
         GameWorld.setModel(GenerateWorld(112,63));
         JScrollPane pane = new JScrollPane(GameWorld);
-        JtableScroll.getViewport ().add (GameWorld);
+        JtableScroll.getViewport().add (GameWorld);
         GameWorld.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         GameWorld.getColumnModel().getColumn(0).setPreferredWidth(5);
-        SetWidth(GameWorld);*/
-        });
+        SetWidth(GameWorld);
+
         stopGameButton.addActionListener(new ActionListener()
         {
             @Override
@@ -91,7 +99,7 @@ public class Main
             public void actionPerformed(ActionEvent e) {connectionHandler.handleEmergencyStop(GameKeyTextField);}
         });
         init();
-        TextAreaJPane.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
+        logTextArea.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
     }
     public static void main(String[] args)
     {
@@ -155,11 +163,11 @@ public class Main
 
         }
     }
-    public  void FillPlanet() throws InterruptedException {
+    public void FillPlanet() throws InterruptedException {
         Thread.sleep(1000);
         for (Planet planet:Controll.game.getWorld().getPlanets())
         {
-            GameWorld.getModel().setValueAt(1,(int)planet.getX(),(int)planet.getY());
+            GameWorld.getModel().setValueAt("?",(int)planet.getX(),(int)planet.getY());
         }
         // DefaultTableCellRenderer létrehozása
     }
@@ -167,17 +175,14 @@ public class Main
     {
         for (Planet planet:Planets.getPlanets_owned())
         {
-            GameWorld.getModel().setValueAt(2,(int)planet.getX(),(int)planet.getY());
+            GameWorld.getModel().setValueAt("O",(int)planet.getX(),(int)planet.getY());
         }
     }
     public void DestoryPlanets()
     {
         for (Planet planet : Planets.unhabitable_planets)
         {
-            Optional<Planet> foundValue = Controll.game.getWorld().getPlanets().stream().filter(element -> element.getId() == planet.getId()).findFirst();
-            Planet plantes = (Planet)foundValue.get();
-
-            GameWorld.getModel().setValueAt(0,(int)plantes.getX(),(int)plantes.getY());
+            GameWorld.getModel().setValueAt("x",(int)planet.getX(),(int)planet.getY());
         }
     }
     private void init()

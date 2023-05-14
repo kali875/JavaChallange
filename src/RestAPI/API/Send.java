@@ -106,7 +106,12 @@ public class Send
             //{"gameConfig": {"bots": [0],"gameType": "SINGLE_PLAYER"},"gameId": "string"}
             //{"gameId":"96e8ae54-1f15-43ac-a55a-f30d33d1ee6e","gameConfig":{"gameType":"SINGLE_PLAYER","bots":[0]}}
             //"{ \"bots\": [ 0 ], \"gameType\": \"SINGLE_PLAYER\"}"
-            json = "{\"bots\": [5],\"gameType\": \"SINGLE_PLAYER\"}";
+
+            json = "{\"bots\": [1],\"gameType\": \"SINGLE_PLAYER\"}";
+
+            // TODO: KI NE KOMMENTELD CSAK HA MEGBESZÉLTÜK
+            //json = "{\"bots\": [],\"gameType\": \"QUALIFYING\"}";
+
             //json = "{gameConfig: {bots: [0],gameType: SINGLE_PLAYER}";
             String test= json;
             client = newHttpClient();

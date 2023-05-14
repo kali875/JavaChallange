@@ -12,6 +12,6 @@ public class MyTask extends TimerTask {
     {
         //unhabitable_planets
         main.MyPlanets();
-        //main.DestoryPlanets();
+        main.DestoryPlanets();
     }
 }

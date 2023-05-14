@@ -42,6 +42,7 @@ public class Controll
 
     public static boolean gameStarted = false;
     public static int doingSomething = 0;
+    private static double whatToDoMultiplier = 2.5;
 
     public void StartStrategy()
     {
@@ -191,7 +192,7 @@ public class Controll
             doingSomething--;
             return;
         }
-        if (closestUnhabitablePlanet.getFirst() * 2.5 > closestPlanet.getFirst()) {
+        if (closestUnhabitablePlanet.getFirst() * whatToDoMultiplier > closestPlanet.getFirst()) {
             Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
             UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
         } else {
