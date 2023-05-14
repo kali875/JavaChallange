@@ -8,11 +8,12 @@ import Utils.ConnectionHandler;
 import Utils.ExistingGameIDParser;
 import Utils.UILogger;
 import WebSocket.WebSocketCommunication;
+import challenge.game.model.Planet;
 import challenge.game.rest.GameKey;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import javax.websocket.DeploymentException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -25,10 +26,20 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Main
 {
     private JTextField GameKeyTextField;
+    private ScheduledExecutorService executor;
+    private MyTask task;
+    private JsonMapper jsonMapper= new JsonMapper();
+    private JButton createGameKeyButton;
+    private JButton createGameButton;
+    private JTextField GameKeytextField;
     private JTextArea logTextArea;
     private JPanel container;
     private JTabbedPane tabbedPane;
@@ -42,6 +53,11 @@ public class Main
     private JButton reconnectButton;
 
     private final ConnectionHandler connectionHandler = new ConnectionHandler();
+    private JTable GameWorld;
+    private JScrollPane JtableScroll;
+    private JPanel TextAreaJPane;
+    private GameID gameID;
+    private GameKey game;
 
     private final UILogger logger = new UILogger();
 
@@ -51,6 +67,13 @@ public class Main
         startGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {connectionHandler.handleGameStart(GameKeyTextField);}
+/*        GamePlace = new JPanel(null);
+        GameWorld.setModel(GenerateWorld(112,63));
+        JScrollPane pane = new JScrollPane(GameWorld);
+        JtableScroll.getViewport ().add (GameWorld);
+        GameWorld.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        GameWorld.getColumnModel().getColumn(0).setPreferredWidth(5);
+        SetWidth(GameWorld);*/
         });
         stopGameButton.addActionListener(new ActionListener()
         {
@@ -67,11 +90,13 @@ public class Main
             @Override
             public void actionPerformed(ActionEvent e) {connectionHandler.handleEmergencyStop(GameKeyTextField);}
         });
+        init();
+        TextAreaJPane.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
     }
     public static void main(String[] args)
     {
         Main main = new Main();
-        main.heartbeat.setFont(new Font("Arial Unicode MS", Font.PLAIN, 14));
+        main.heartbeat.setFont(new Font("Arial Unicode MS", Font.PLAIN, 9));
 
         JFrame frame = new JFrame("App");
         frame.setContentPane(main.tabbedPane);
@@ -93,7 +118,7 @@ public class Main
 
         frame.pack();
         frame.setSize(1000,1000);
-        frame.setVisible(true);
+
 
         Timer logger_heartbeat = new Timer(1000, new ActionListener() {
             @Override
@@ -103,5 +128,64 @@ public class Main
         });
 
         logger_heartbeat.start();
+        frame.setVisible(true);
+
+    }
+    public DefaultTableModel GenerateWorld(long width,long height)
+    {
+        //"width": 112,
+        // "height": 63,
+        DefaultTableModel model = new DefaultTableModel();
+        for( int i = 0; i < height +1;i++)
+        {
+            model.addColumn("row"+i);
+        }
+        for (int i = 0; i < width +1;i++)
+        {
+            model.addRow(new Object[] { });
+
+        }
+        return model;
+    }
+    public void SetWidth(JTable table)
+    {
+        for (int i= 0; i < table.getColumnCount();i++)
+        {
+            table.getColumnModel().getColumn(i).setPreferredWidth(10);
+
+        }
+    }
+    public  void FillPlanet() throws InterruptedException {
+        Thread.sleep(1000);
+        for (Planet planet:Controll.game.getWorld().getPlanets())
+        {
+            GameWorld.getModel().setValueAt(1,(int)planet.getX(),(int)planet.getY());
+        }
+        // DefaultTableCellRenderer létrehozása
+    }
+    public void MyPlanets()
+    {
+        for (Planet planet:Planets.getPlanets_owned())
+        {
+            GameWorld.getModel().setValueAt(2,(int)planet.getX(),(int)planet.getY());
+        }
+    }
+    public void DestoryPlanets()
+    {
+        for (Planet planet : Planets.unhabitable_planets)
+        {
+            Optional<Planet> foundValue = Controll.game.getWorld().getPlanets().stream().filter(element -> element.getId() == planet.getId()).findFirst();
+            Planet plantes = (Planet)foundValue.get();
+
+            GameWorld.getModel().setValueAt(0,(int)plantes.getX(),(int)plantes.getY());
+        }
+    }
+    private void init()
+    {
+        // ...
+        executor = Executors.newScheduledThreadPool(1);
+        task = new MyTask(this);
+        executor.scheduleAtFixedRate(task, 0, 5, TimeUnit.SECONDS);
+        // ...
     }
 }
