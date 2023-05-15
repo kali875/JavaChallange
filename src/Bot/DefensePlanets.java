@@ -1,5 +1,6 @@
 package Bot;
 
+import GameData.Planets;
 import challenge.game.model.Planet;
 
 import java.util.*;
@@ -46,10 +47,27 @@ public class DefensePlanets
     public static int getTheHighestKey() {
         return Collections.max(defPlanets.keySet());
     }
+    public static int getSecondHighestKey() {
+        List<Integer> sortedKeys = new ArrayList<>(defPlanets.keySet());
+        Collections.sort(sortedKeys, Collections.reverseOrder());
+
+        return sortedKeys.get(1);
+    }
 
     public static Planet getHighestValuedEndangeredPlanet() {
-        for (Planet p : defPlanets.get(getTheHighestKey())) {
-            return p;
+        if (defPlanets.get(getTheHighestKey()).size() > 1) {
+            for (Planet p : defPlanets.get(getTheHighestKey())) {
+                if (Planets.isPlanetShielded(p)) continue;
+                return p;
+            }
+        }
+        else if (defPlanets.keySet().size() < 2) {
+            return null;
+        } else {
+            for (Planet p : defPlanets.get(getSecondHighestKey())) {
+                if (Planets.isPlanetShielded(p)) continue;
+                return p;
+            }
         }
         return null;
     }

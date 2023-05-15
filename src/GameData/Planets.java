@@ -13,7 +13,11 @@ public class Planets {
     private static List<Planet> planets_owned = new ArrayList<>();
     public static List<Planet> unhabitable_planets = new ArrayList<>();
     public static List<Planet> destroyed_planets = new ArrayList<>();
+    private static List<Planet> ignored_planets = new ArrayList<>();
     public static int numberOfAllPlanets = 0;
+    public static List<Planet> planetsShielded = new ArrayList<>();
+    public static Planet basePlanet = null;
+    private static int radius = 10;
 
     public static void setPlanets(List<Planet> _planets) {
         planets = _planets;
@@ -21,7 +25,10 @@ public class Planets {
         Optional<Planet> base_planet = planets.stream()
                 .filter(planet -> planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId())
                 .findFirst();
-        base_planet.ifPresent(value -> planets_owned.add(value));
+        base_planet.ifPresent(value -> {
+            planets_owned.add(value);
+            basePlanet = value;
+        });
     }
     public static Planet getPlanetByID(int planet_id) {
         Optional<Planet> result = planets.stream()
@@ -42,7 +49,7 @@ public class Planets {
         OnGoingMBHShots.onPlanetExploded(planet_id);
     }
 
-    private static boolean isPlanetDestroyed(int planet_id) {
+    public static boolean isPlanetDestroyed(int planet_id) {
         return destroyed_planets.stream().anyMatch(planet -> planet.getId() == planet_id);
     }
 
@@ -99,6 +106,7 @@ public class Planets {
                 if (unhabitable_planets.stream().anyMatch(p -> p.getId() == planet.getId()))
                     continue;
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
+            if (isPlanetShielded(planet)) continue;
 
             Pair<Double, Integer> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet);
             closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond()), planet));
@@ -125,6 +133,8 @@ public class Planets {
                 continue;
             }
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
+            if (isPlanetShielded(planet)) continue;
+            if (isPlanetIgnored(planet)) continue;
 
             Pair<Double, Integer> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet);
             closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond()), planet));
@@ -142,6 +152,7 @@ public class Planets {
         double minimum_distance = Double.MAX_VALUE;
         int minimum_distance_id = 0;
         for (int i = 0; i < planets_owned.size(); i++) {
+            if (isPlanetShielded(planets_owned.get(i)))  continue;
             double distance = planets_owned.get(i).distance(target);
             if (distance < minimum_distance) {
                 minimum_distance = distance;
@@ -149,5 +160,24 @@ public class Planets {
             }
         }
         return new Pair<>(minimum_distance, minimum_distance_id);
+    }
+
+    private static void findPointsInCircle() {
+        // Pont távolsága a középponttól
+        for (Planet point : planets)
+            if (basePlanet.distance(point) <= radius)
+                ignored_planets.add(point);
+    }
+
+    private static boolean isPlanetIgnored(Planet planet) {
+        for (Planet ignored : ignored_planets)
+            if (ignored.getId() == planet.getId()) return true;
+        return false;
+    }
+
+    public static boolean isPlanetShielded(Planet planet) {
+        for (Planet ignored : planetsShielded)
+            if (ignored.getId() == planet.getId()) return true;
+        return false;
     }
 }

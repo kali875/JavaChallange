@@ -17,7 +17,7 @@ import Bot.EnemyPlanets;
 public class EnemyDataAnalysis
 {
     static EnemyPlanets enemyPlanets = new EnemyPlanets();
-    static int frequencyLimit= 5;
+    static int frequencyLimit= 8;
     static double StepLength = 1.0;
     //GravityWaveCrossing
     private static double RadianConverter(int degree)

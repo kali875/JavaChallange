@@ -26,17 +26,17 @@ public class MyDataAnalysis
     static double stepLength = 1.0;
     //GravityWaveCrossing
     static  int radius= 10;
-    static int StepRange = 20;
+    static int StepRange = 10;
     public static void setFrequencyLimit(int frequencyLimit) {
         EnemyDataAnalysis.frequencyLimit = frequencyLimit;
     }
 
-    public static List<Planet> FindPlanet(GameEvent gameEvent)
+    /*public static List<Planet> FindPlanet(ActionEffect actionEffect)
     {
         int idx = 0;
         List<Planet> temp = new ArrayList<>();
 
-        if (gameEvent.getActionEffect() instanceof GravityWaveCrossing gw)
+        if (actionEffect instanceof GravityWaveCrossing gw)
         {
             if( gw.getCause() == GravityWaveCause.EXPLOSION)
             {
@@ -58,18 +58,21 @@ public class MyDataAnalysis
         idx=0;
         for (GameAction value : Controll.Commands)
         {
-            if(value.getTargetId() == gameEvent.getActionEffect().getAffectedMapObjectId())
+            if(value.getTargetId() == actionEffect.getAffectedMapObjectId())
                 return addPlanetsToList(temp, value, idx);
             idx++;
         }
         return null;
-    }
-    public static void analData(GameEvent gameEvent)
+    }*/
+    public static void analData(ActionEffect actionEffect)
     {
+        Planet planet = Planets.getPlanetByID(actionEffect.getAffectedMapObjectId());
+        if (planet == null) return;
+        findPointsInCircle(planet, radius, Planets.getPlanets_owned());
         /**
          * Azon saját bolygónk mérlegelése az kimenő adatok alapján
          */
-        temp = FindPlanet(gameEvent);
+        /*temp = FindPlanet(actionEffect);
 
         if (temp == null) return;
         if(temp.get(0) != null && temp.get(1) != null)
@@ -79,7 +82,7 @@ public class MyDataAnalysis
             temp = null;
             //double rad = DefinesDirection(SrcPlanet,TargetPlanet); /////////////
 
-            for ( ActionEffectType type : gameEvent.getActionEffect().getEffectChain())
+            for ( ActionEffectType type : actionEffect.getEffectChain())
             {
                 switch (type) {
                     case INACTIVITY_FLARE_START ->
@@ -94,43 +97,31 @@ public class MyDataAnalysis
         else
         {
             //System.out.println("null src, targetid ");
-        }
+        }*/
 
     }
-    private static void getPossiblePlanets(Planet src_planet, int precision)
+/*    private static void getPossiblePlanets(Planet src_planet, int precision)
     {
+        // System.out.println("srcplanet:"+ src_planet.getY()+"-"+src_planet.getX());
+        List<Planet> PotentialEndangeredMyPlanet = findPointsInCircle(src_planet,radius,Planets.getPlanets_owned());
 
-        CopyOnWriteArrayList<Planet> difflist = new CopyOnWriteArrayList<>(Planets.getPlanets());
-        for (Planet planet: Planets.getPlanets_owned())
-        {
-            difflist.removeIf(p -> p.getId() == planet.getId());
-        }
-        for (Planet planet: Planets.unhabitable_planets)
-        {
-            difflist.removeIf(p -> p.getId() == planet.getId());
-        }
 
-        List<Planet> PotentialEnemyPlanet = findPointsInCircle(src_planet,radius,difflist);
-
-        for (Planet planets :PotentialEnemyPlanet)
-        {
-            double rad = DefinesDirection(src_planet,planets);
-            double StartDegree  =    rad - RadianConverter(precision);
-            double EndDegree    =    rad + RadianConverter(precision);
-            List<int[]> cells = findPossibleCells(Controll.game.getWorld().getWidth(),Controll.game.getWorld().getHeight(),planets,EndDegree,StartDegree);
-            SelectEndangeredPlanets(cells);
-        }
-    }
-    private static double RadianConverter(int degree)
+        List<int[]> cells = new ArrayList<>();
+        for (Planet planets : PotentialEndangeredMyPlanet)
+            cells.add(new int[]{(int)planets.getX(),(int)planets.getY()});
+        // SelectEndangeredPlanets(cells);
+        cells.clear();
+    }*/
+/*    private static double RadianConverter(int degree)
     {
         return Math.toRadians( (360.0/100)*degree);
-    }
-    public static List<int[]> findPossibleCells(long width, long height, Planet planet, double startDegree, double endDegree)
+    }*/
+/*    public static List<int[]> findPossibleCells(long width, long height, Planet planet, double startDegree, double endDegree)
     {
         List<int[]> possibleCells = new ArrayList<>();
-        /** X és Y komponensek kiszámítása a kezdő és végpont irányszögek alapján
+        *//** X és Y komponensek kiszámítása a kezdő és végpont irányszögek alapján
          * Position: (x,y) pair
-         */
+         *//*
         Pair<Double, Double> startPosition = new Pair<>();
         startPosition.setFirst(Math.cos(startDegree));
         startPosition.setSecond(Math.sin(startDegree));
@@ -163,47 +154,50 @@ public class MyDataAnalysis
             count ++;
         }
         return possibleCells;
-    }
+    }*/
 
-    public static void SelectEndangeredPlanets(List<int[]> cells)
+/*    public static void SelectEndangeredPlanets(List<int[]> cells)
     {
 
         for (Planet planet: Planets.getPlanets())
         {
-
             for (int[] cel :cells)
             {
                 if(planet.getY() == cel[1] && planet.getX() == cel[0] && !planet.isDestroyed() && planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId() )
                 {
                     DefensePlanets.putEndangeredPlanet(planet);
+                    // System.out.println(planet.getId());
                 }
             }
         }
-    }
-    public static double DefinesDirection(Planet SrcPlanet, Planet TargetPlanet) {
-        long horizontalDistance = TargetPlanet.getX() - SrcPlanet.getX();
-        long verticalDistance = TargetPlanet.getY() - SrcPlanet.getY();
+    }*/
+/*    public static double DefinesDirection(Planet SrcPlanet, Planet TargetPlanet)
+    {
+        // Irányszög számítása a B pontból az A pontba
+        double iranyszogBA = Math.atan2(TargetPlanet.getY() - SrcPlanet.getY(), (TargetPlanet.getX() * -1) - (SrcPlanet.getX() * -1));
 
-        return Math.atan2(verticalDistance, horizontalDistance);
-    }
+        // Radianból fokba alakítás
+        double iranyszogBAFok = Math.toDegrees(iranyszogBA);
 
-    static List<Planet> findPointsInCircle(Planet srcPlanet, int radius, List<Planet> points) {
-        List<Planet> pointsInCircle = new ArrayList<>();
-
-        for (Planet point : points) {
-            // Pont távolsága a középponttól
-            int distance = (int) Math.sqrt(Math.pow(point.getX() - srcPlanet.getX(), 2) + Math.pow(point.getY() - srcPlanet.getY(), 2));
-
-            if (distance <= radius)
-            {
-                pointsInCircle.add(point);
-            }
+        // Negatív szögnegyedet pozitívvá alakítás
+        double iranyszogNegyed = iranyszogBAFok;
+        if (iranyszogNegyed < 0)
+        {
+            iranyszogNegyed += 360;
         }
 
-        return pointsInCircle;
+        return Math.toRadians(iranyszogNegyed);
+    }*/
+
+    static void findPointsInCircle(Planet srcPlanet, int radius, List<Planet> points) {
+
+        // Pont távolsága a középponttól
+        for (Planet point : points)
+            if (srcPlanet.distance(point) <= radius)
+                DefensePlanets.putEndangeredPlanet(point);
     }
 
-    private static List<Planet> addPlanetsToList(List<Planet> temp, GameAction action, int idx)
+/*    private static List<Planet> addPlanetsToList(List<Planet> temp, GameAction action, int idx)
     {
         temp.add(Controll.game.getWorld().getPlanets().stream().filter(Planet -> Planet.getId() == action.getTargetId()).findFirst().orElse(null));
         temp.add(Planets.getPlanets_owned().stream()
@@ -215,19 +209,19 @@ public class MyDataAnalysis
                 ).findFirst().orElse(null));
         Controll.Commands.remove(idx);
         return temp;
-    }
-    public static boolean checkForDirectionChange(double endPosition_X, double endPosition_Y, double current_row, double current_column) {
+    }*/
+/*    public static boolean checkForDirectionChange(double endPosition_X, double endPosition_Y, double current_row, double current_column) {
         // Ellenőrzés, hogy az irány megváltozott-e
         double direction_X = Math.cos(Math.atan2(current_row, current_column));
         double direction_Y = Math.sin(Math.atan2(current_row, current_column));
 
         return Math.abs(direction_X - endPosition_X) < 1e-9 && Math.abs(direction_Y - endPosition_Y) < 1e-9;
-    }
+    }*/
 
     public static Planet getDefPlanet()
     {
         if (DefensePlanets.defPlanets.isEmpty()) return null;
-        DefensePlanets.logContainer();
+        //DefensePlanets.logContainer();
         //System.out.println("DefensePlanets.getTheHighestKey(): " + DefensePlanets.getTheHighestKey());
         if(DefensePlanets.getTheHighestKey() > frequencyLimit)
         {

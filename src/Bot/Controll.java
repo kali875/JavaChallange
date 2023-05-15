@@ -4,9 +4,11 @@ import GameData.Actions;
 import GameData.JavalessWonders;
 import GameData.OnGoingMBHShots;
 import GameData.Planets;
+import Utils.InitialDataAnalysis;
 import Utils.UILogger;
 import challenge.game.event.EventType;
 import challenge.game.event.GameEvent;
+import challenge.game.event.action.ErectShieldAction;
 import challenge.game.event.action.GameAction;
 import challenge.game.event.action.ShootMBHAction;
 import challenge.game.event.actioneffect.ActionEffect;
@@ -43,7 +45,7 @@ public class Controll
 
     public static boolean gameStarted = false;
     public static int doingSomething = 0;
-    private static double whatToDoMultiplier = 2.5;
+    private static double whatToDoMultiplier = 2.75;
     private static long inactivity_timer = 0;
     private static long lastInactivityCheck = 0;
 
@@ -58,9 +60,16 @@ public class Controll
 
     public static void onGameStarted(Game game_data) {
         game = game_data;
+
+        InitialDataAnalysis initialDataAnalysis = new InitialDataAnalysis();
+        List<Map.Entry<Planet, List<Planet>>> clusters = initialDataAnalysis.getClusters();
+        clusters.forEach(c -> {
+            System.out.println(c.getKey().getId() + " (" + c.getKey().getX() + " , " + c.getKey().getY() + ")");
+        });
         for (int i = 0; i < game.getSettings().getMaxConcurrentActions(); i++)
             doSomething();
         System.out.println("Map size: height: " + game.getSettings().getHeight() + " - width: " + game.getSettings().getWidth());
+
     }
 
     public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect)
@@ -91,23 +100,28 @@ public class Controll
             double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
             MyDataAnalysis.setFrequencyLimit(normalizeValue(threshold, 0, 1, 1, 100));
         }*/
-
         if (actionEffect.getCause() == GravityWaveCause.EXPLOSION)
             Planets.onPlanetDestroyed(actionEffect.getSourceId());
 
+        if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) {
+            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
+            System.out.println(threshold);
+            MyDataAnalysis.setFrequencyLimit((int) threshold);
+            MyDataAnalysis.analData(actionEffect);
+        };
         checkInactivity();
     }
 
-    public static void onGameEvent(GameEvent gameEvent) {
+    /*public static void onGameEvent(GameEvent gameEvent) {
         if (gameEvent.getEventType() == EventType.ACTION_EFFECT)
             MyDataAnalysis.analData(gameEvent);
-/*        if (actionEffect.getInflictingPlayer() != JavalessWonders.getCurrentPlayer().getId())
+*//*        if (actionEffect.getInflictingPlayer() != JavalessWonders.getCurrentPlayer().getId())
         {
             //int totalPlanets,                 int numPlayers,             int nonHabitablePlanets,        int ownedPlanets, int destroyedPlanets, int destroyedPlanetScore
             EnemyDataAnalysis.setFrequencyLimit((int)EnemyPlanetSequenceLimit(Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets()));
             EnemyDataAnalysis.analyzeData(actionEffect);
-        }*/
-        /*
+        }*//*
+        *//*
         else
         {
               //setFrequencyLimit                      //int width,                               int length,                              int totalPlanets,                               int numPlayers,                         int nonHabitablePlanets,         int ownedPlanets, int occupiedPlanets, int destroyedPlanetScore
@@ -119,8 +133,8 @@ public class Controll
 
             Planets.onPlanetDestroyed(actionEffect.getSourceId());
         }
-        doSomething();*/
-    }
+        doSomething();*//*
+    }*/
 
     public static void onActionEffect(ActionEffect actionEffect) {
         UILogger.log_string("Regular Action Effect happened :)");
@@ -131,7 +145,14 @@ public class Controll
         UILogger.log_string("Time at: " + actionEffect.getTime());
         UILogger.log_string(".............................................");
 
-        if (actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_DESTROYED)) shieldTimer = 0;
+        if (actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_DESTROYED)
+            || actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_TIMEOUT)
+        ) {
+            Planets.planetsShielded.removeIf(p -> p.getId() == actionEffect.getAffectedMapObjectId());
+            shieldTimer = 0;
+            lastShieldAttempt = 0;
+        }
+        if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) MyDataAnalysis.analData(actionEffect);
         checkInactivity();
     }
 
@@ -146,8 +167,12 @@ public class Controll
         inactivity_timer = inactivity_timer + (timeNow - lastInactivityCheck);
         lastInactivityCheck = timeNow;
         if (inactivity_timer > game.getSettings().getPassivityTimeTreshold() * 0.3)
-            if (Actions.getRemainingActionCount() - doingSomething > 1)
+            if (Actions.getRemainingActionCount() - doingSomething > 1) {
+                System.out.println("INACTIVITY! " + inactivity_timer);
+                inactivity_timer = 0;
+                lastInactivityCheck = Calendar.getInstance().getTimeInMillis();
                 doSomething();
+            }
     }
 
     public static void doSomething() {
@@ -172,10 +197,16 @@ public class Controll
         }
         // Nincs 2 action fix pusztításhoz vagy nincs enemy planet
         // megpróbál védekezni
-        if (shieldTimer <= 0) {
+        if (shieldTimer <= 0 && Planets.planetsShielded.size() < 2) {
             Planet endangeredPlanet = MyDataAnalysis.getDefPlanet();
             if (endangeredPlanet != null) {
-                Shield.erectShield(endangeredPlanet.getId());
+                ErectShieldAction shieldAction = Shield.erectShield(endangeredPlanet);
+                if (shieldAction == null) {
+                    doingSomething--;
+                    System.out.println("0");
+                    return;
+                }
+                Planets.planetsShielded.add(endangeredPlanet);
                 shieldTimer = game.getSettings().getTimeToBuildShild() + game.getSettings().getShildDuration();
                 lastShieldAttempt = Calendar.getInstance().getTimeInMillis();
                 UILogger.log_string("Shield erected! -> " + endangeredPlanet.getId());
@@ -184,12 +215,12 @@ public class Controll
             }
         } else {
             long timeNow = Calendar.getInstance().getTimeInMillis();
-            shieldTimer = shieldTimer - (lastShieldAttempt - timeNow);
+            shieldTimer = shieldTimer - (timeNow - lastShieldAttempt);
             lastShieldAttempt = timeNow;
         }
         // nem járt még le a pajzs vagy nincs még veszélyeztetett bolygó
         // küldetés próbál küldeni
-        boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.65;
+        boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.8;
         Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets(isLateGamePhase);
         if (closestPlanet != null) OnGoingMBHShots.possibleTarget(closestPlanet.getSecond().getSecond());
         if (!isLateGamePhase) {
@@ -286,7 +317,7 @@ public class Controll
         double destroyedMembership = calculateMembership(destroyedPlanetScore, 0, totalPlanets, width, length);
 
         double threshold = Math.max(Math.max(ownedMembership, occupiedMembership), destroyedMembership);
-        return threshold;
+        return threshold / 10;
     }
 
     public static double calculateMembership(int value, int min, int max, int width, int length) {

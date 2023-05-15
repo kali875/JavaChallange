@@ -28,7 +28,7 @@ public class MessageHandler {
     public void handleMessage(String message) {
         try {
             gameEvent = jsonMapper.readValue(message, GameEvent.class);
-            Controll.onGameEvent(gameEvent);
+            //Controll.onGameEvent(gameEvent);
 
             if (gameEvent.getEventType() == EventType.GAME_STARTED) {
                 handleGameStarted(gameEvent.getGame());

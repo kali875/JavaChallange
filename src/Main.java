@@ -102,7 +102,8 @@ public class Main
             public void actionPerformed(ActionEvent e) {connectionHandler.handleEmergencyStop(GameKeyTextField);}
         });
         init();
-        logTextArea.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
+        logTextArea.setPreferredSize(new Dimension(200, Integer.MAX_VALUE));
+        //logTextArea.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
     }
     public static void main(String[] args)
     {
