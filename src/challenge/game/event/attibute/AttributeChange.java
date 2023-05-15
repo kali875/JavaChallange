@@ -1,6 +1,7 @@
 package challenge.game.event.attibute;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

@@ -13,13 +13,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GameCreated {
     /**
-     * A létrehozott játékhoz tartozó konfigurációk.
-     */
-    @ApiModelProperty(value="Configuration object of the game.")
-    private GameConfig gameConfig;
-    /**
      * A létrehozott játék azonosítója.
      */
     @ApiModelProperty(value="Id of the created game.")
     private String gameId;
+    /**
+     * A létrehozott játékhoz tartozó konfigurációk.
+     */
+    @ApiModelProperty(value="Configuration object of the game.")
+    private GameConfig gameConfig;
 }

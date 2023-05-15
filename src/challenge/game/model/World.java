@@ -1,10 +1,9 @@
 package challenge.game.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.Data;
 
 /**
  * Ez tárolja a világot, vagyis azt az univerzumot, amelyben a játék zajlik.
@@ -22,9 +21,9 @@ public class World {
     /**
      * Tárolja az univerzumban található bolygókat.
      */
-    private List<Planet> planets = new ArrayList<Planet>();
+    private List<Planet> planets = new ArrayList<>();
     /**
      * Tárolja az univerumban található féreglyukakat.
      */
-    @JsonIgnore private List<WormHole> wormHoles = new ArrayList<WormHole>();
+    private List<WormHole> wormHoles = new ArrayList<>();
 }
