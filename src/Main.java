@@ -1,4 +1,5 @@
 import Bot.Controll;
+import GameData.OnGoingMBHShots;
 import GameData.Planets;
 import RestAPI.API.Send;
 import RestAPI.Model.Parameter;
@@ -6,6 +7,7 @@ import RestAPI.Properties.Config;
 import RestAPI.Response.GameID;
 import Utils.ConnectionHandler;
 import Utils.ExistingGameIDParser;
+import Utils.GameWorldTableRenderer;
 import Utils.UILogger;
 import WebSocket.WebSocketCommunication;
 import challenge.game.model.Planet;
@@ -14,6 +16,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import javax.websocket.DeploymentException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -171,26 +174,14 @@ public class Main
         }
         // DefaultTableCellRenderer létrehozása
     }
-    public void MyPlanets()
-    {
-        for (Planet planet:Planets.getPlanets_owned())
-        {
-            GameWorld.getModel().setValueAt("O",(int)planet.getX(),(int)planet.getY());
-        }
-    }
-    public void DestoryPlanets()
-    {
-        for (Planet planet : Planets.unhabitable_planets)
-        {
-            GameWorld.getModel().setValueAt("x",(int)planet.getX(),(int)planet.getY());
-        }
-    }
+
     private void init()
     {
         // ...
         executor = Executors.newScheduledThreadPool(1);
-        task = new MyTask(this);
-        executor.scheduleAtFixedRate(task, 0, 5, TimeUnit.SECONDS);
+        task = new MyTask(GameWorld);
+        GameWorld.setDefaultRenderer(Object.class, new GameWorldTableRenderer());
+        executor.scheduleAtFixedRate(task, 0, 1, TimeUnit.SECONDS);
         // ...
     }
 }

@@ -43,6 +43,8 @@ public class Controll
     public static boolean gameStarted = false;
     public static int doingSomething = 0;
     private static double whatToDoMultiplier = 2.5;
+    private static long inactivity_timer = 0;
+    private static long lastInactivityCheck = 0;
 
     public void StartStrategy()
     {
@@ -57,6 +59,7 @@ public class Controll
         game = game_data;
         for (int i = 0; i < game.getSettings().getMaxConcurrentActions(); i++)
             doSomething();
+        System.out.println("Map size: height: " + game.getSettings().getHeight() + " - width: " + game.getSettings().getWidth());
     }
 
     public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect)
@@ -90,6 +93,8 @@ public class Controll
 
         if (actionEffect.getCause() == GravityWaveCause.EXPLOSION)
             Planets.onPlanetDestroyed(actionEffect.getSourceId());
+
+        checkInactivity();
     }
 
     public static void onGameEvent(GameEvent gameEvent) {
@@ -126,16 +131,32 @@ public class Controll
         UILogger.log_string(".............................................");
 
         if (actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_DESTROYED)) shieldTimer = 0;
+        checkInactivity();
+    }
+
+    private static void doneSomething() {
+        doingSomething--;
+        inactivity_timer = 0;
+        lastInactivityCheck = Calendar.getInstance().getTimeInMillis();
+    }
+
+    private static void checkInactivity() {
+        long timeNow = Calendar.getInstance().getTimeInMillis();
+        inactivity_timer = inactivity_timer + (timeNow - lastInactivityCheck);
+        lastInactivityCheck = timeNow;
+        if (inactivity_timer > game.getSettings().getPassivityTimeTreshold() * 0.3)
+            if (Actions.getRemainingActionCount() - doingSomething > 1)
+                doSomething();
     }
 
     public static void doSomething() {
         doingSomething++;
         if (Actions.getRemainingActionCount() < 1) {
-            doingSomething--;
+            doneSomething();
             return;
         }
         if (Actions.getRemainingActionCount() == 1 && EnemyDataAnalysis.isThereEnemyWithHighChance()) {
-            doingSomething--;
+            doneSomething();
             return;
         }
         if (Actions.getRemainingActionCount() > 1) {
@@ -144,7 +165,7 @@ public class Controll
                 for (int i = 0; i < 2; i++)
                     Bot.MBH.sendMBH(Planets.findClosestOwnedPlanetToTarget(p).getId(), p.getId());
                 UILogger.log_string("Possible Enemy planet shot! -> " + p.getId());
-                doingSomething--;
+                doneSomething();
                 return;
             }
         }
@@ -157,7 +178,7 @@ public class Controll
                 shieldTimer = game.getSettings().getTimeToBuildShild() + game.getSettings().getShildDuration();
                 lastShieldAttempt = Calendar.getInstance().getTimeInMillis();
                 UILogger.log_string("Shield erected! -> " + endangeredPlanet.getId());
-                doingSomething--;
+                doneSomething();
                 return;
             }
         } else {
@@ -167,40 +188,40 @@ public class Controll
         }
         // nem járt még le a pajzs vagy nincs még veszélyeztetett bolygó
         // küldetés próbál küldeni
-        Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets();
-        Pair<Double, Pair<Planet, Planet>> closestUnhabitablePlanet = Planets.findClosestUnhabitablePlanet();
-        if (closestPlanet == null && closestUnhabitablePlanet == null) {
-            UILogger.log_string("doSomething() - There was nothing i could do");
-            UILogger.log_string("Stats:");
-            UILogger.log_string("Number of planets left: " + Planets.getPlanets().size());
-            UILogger.log_string("Own planet count: " + Planets.getPlanets_owned().size());
-            UILogger.log_string("Unhabitable planets count: " + Planets.unhabitable_planets.size());
-            doingSomething = 10;
-            Actions.onActionAttributeChange(-10);
-            return;
-        }
-        if (closestPlanet != null && closestUnhabitablePlanet == null) {
-            Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
-            UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
-            doingSomething--;
-            return;
-        }
-        if (closestPlanet == null) {
-            Bot.MBH.sendMBH(closestUnhabitablePlanet.getSecond().getFirst().getId(), closestUnhabitablePlanet.getSecond().getSecond().getId());
-            OnGoingMBHShots.onShot(closestUnhabitablePlanet.getSecond().getSecond());
-            UILogger.log_string("Unhabitable planet shot! -> " + closestUnhabitablePlanet.getSecond().getSecond().getId());
-            doingSomething--;
-            return;
-        }
-        if (closestUnhabitablePlanet.getFirst() * whatToDoMultiplier > closestPlanet.getFirst()) {
-            Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
-            UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
+        boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.65;
+        Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets(isLateGamePhase);
+        if (closestPlanet != null) OnGoingMBHShots.possibleTarget(closestPlanet.getSecond().getSecond());
+        if (!isLateGamePhase) {
+            Pair<Double, Pair<Planet, Planet>> closestUnhabitablePlanet = Planets.findClosestUnhabitablePlanet();
+            if (closestUnhabitablePlanet != null) OnGoingMBHShots.possibleTarget(closestUnhabitablePlanet.getSecond().getSecond());
+
+            if (closestPlanet != null && closestUnhabitablePlanet == null) {
+                Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
+                UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
+                doneSomething();
+                return;
+            }
+            if (closestPlanet == null) {
+                Bot.MBH.sendMBH(closestUnhabitablePlanet.getSecond().getFirst().getId(), closestUnhabitablePlanet.getSecond().getSecond().getId());
+                OnGoingMBHShots.onShot(closestUnhabitablePlanet.getSecond().getSecond());
+                UILogger.log_string("Unhabitable planet shot! -> " + closestUnhabitablePlanet.getSecond().getSecond().getId());
+                doneSomething();
+                return;
+            }
+            if (closestUnhabitablePlanet.getFirst() * whatToDoMultiplier > closestPlanet.getFirst()) {
+                Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
+                UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
+            } else {
+                Bot.MBH.sendMBH(closestUnhabitablePlanet.getSecond().getFirst().getId(), closestUnhabitablePlanet.getSecond().getSecond().getId());
+                OnGoingMBHShots.onShot(closestUnhabitablePlanet.getSecond().getSecond());
+                UILogger.log_string("Unhabitable planet shot! -> " + closestUnhabitablePlanet.getSecond().getSecond().getId());
+            }
         } else {
-            Bot.MBH.sendMBH(closestUnhabitablePlanet.getSecond().getFirst().getId(), closestUnhabitablePlanet.getSecond().getSecond().getId());
-            OnGoingMBHShots.onShot(closestUnhabitablePlanet.getSecond().getSecond());
-            UILogger.log_string("Unhabitable planet shot! -> " + closestUnhabitablePlanet.getSecond().getSecond().getId());
+            Bot.MBH.sendMBH(closestPlanet.getSecond().getFirst().getId(), closestPlanet.getSecond().getSecond().getId());
+            UILogger.log_string("Unknown planet shot! -> " + closestPlanet.getSecond().getSecond().getId());
         }
-        doingSomething--;
+
+        doneSomething();
     }
 
     public static double calculateScatterLimit(int totalPlanets, int numPlayers, int nonHabitablePlanets, int ownedPlanets, int destroyedPlanets)

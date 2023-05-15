@@ -1,5 +1,6 @@
 package GameData;
 
+import Bot.Controll;
 import Bot.DefensePlanets;
 import challenge.game.model.Planet;
 import org.glassfish.grizzly.utils.Pair;
@@ -11,9 +12,12 @@ public class Planets {
     private static List<Planet> planets = new ArrayList<>();
     private static List<Planet> planets_owned = new ArrayList<>();
     public static List<Planet> unhabitable_planets = new ArrayList<>();
+    public static List<Planet> destroyed_planets = new ArrayList<>();
+    public static int numberOfAllPlanets = 0;
 
     public static void setPlanets(List<Planet> _planets) {
         planets = _planets;
+        numberOfAllPlanets = planets.size();
         Optional<Planet> base_planet = planets.stream()
                 .filter(planet -> planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId())
                 .findFirst();
@@ -27,11 +31,26 @@ public class Planets {
     }
 
     public static void onPlanetDestroyed(int planet_id) {
+        if (!isPlanetDestroyed(planet_id)) {
+            Planet destroyed_planet = getDestroyedPlanet(planet_id);
+            if (destroyed_planet != null) destroyed_planets.add(destroyed_planet);
+        }
         planets.removeIf(p -> p.getId() == planet_id);
         planets_owned.removeIf(p -> p.getId() == planet_id);
         unhabitable_planets.removeIf(pID -> pID.getId() == planet_id);
         DefensePlanets.removePlanet(planet_id);
         OnGoingMBHShots.onPlanetExploded(planet_id);
+    }
+
+    private static boolean isPlanetDestroyed(int planet_id) {
+        return destroyed_planets.stream().anyMatch(planet -> planet.getId() == planet_id);
+    }
+
+    private static Planet getDestroyedPlanet(int planet_id) {
+        Optional<Planet> result = Controll.game.getWorld().getPlanets().stream()
+                .filter(planet -> planet.getId() == planet_id)
+                .findFirst();
+        return result.orElse(null);
     }
 
     public static void onPlanetCaptured(int planet_id) {
@@ -60,7 +79,7 @@ public class Planets {
         return planets;
     }
 
-    public static Pair<Double, Pair<Planet, Planet>> findClosestPlanets() {
+    public static Pair<Double, Pair<Planet, Planet>> findClosestPlanets(boolean shallIncludeUnhabitablePlanets) {
         SortedMap<Double, Pair<Planet, Planet>> closestPlanets = new TreeMap<>(new Comparator<Double>() {
             @Override
             public int compare(Double d1, Double d2) {
@@ -69,9 +88,16 @@ public class Planets {
         });
 
         for (Planet planet : planets) {
-            if (planet.isDestroyed()) continue;
+            if (isPlanetDestroyed(planet.getId())) {
+                planets.remove(planet);
+                OnGoingMBHShots.onPlanetExploded(planet.getId());
+                continue;
+            }
+            if (OnGoingMBHShots.isOngoingMBHShotToTarget(planet.getId())) continue;
             if (planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId()) continue;
-            if (unhabitable_planets.stream().anyMatch(p -> p.getId() == planet.getId())) continue;
+            if (!shallIncludeUnhabitablePlanets)
+                if (unhabitable_planets.stream().anyMatch(p -> p.getId() == planet.getId()))
+                    continue;
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
 
             Pair<Double, Integer> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet);
@@ -93,6 +119,11 @@ public class Planets {
         });
 
         for (Planet planet : unhabitable_planets) {
+            if (isPlanetDestroyed(planet.getId())) {
+                unhabitable_planets.remove(planet);
+                OnGoingMBHShots.onPlanetExploded(planet.getId());
+                continue;
+            }
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
 
             Pair<Double, Integer> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet);
