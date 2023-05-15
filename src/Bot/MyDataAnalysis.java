@@ -16,6 +16,7 @@ import org.glassfish.grizzly.utils.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 public class MyDataAnalysis
@@ -99,14 +100,14 @@ public class MyDataAnalysis
     private static void getPossiblePlanets(Planet src_planet, int precision)
     {
 
-        List<Planet> difflist = Controll.game.getWorld().getPlanets();
+        CopyOnWriteArrayList<Planet> difflist = new CopyOnWriteArrayList<>(Planets.getPlanets());
         for (Planet planet: Planets.getPlanets_owned())
         {
-            difflist.remove(planet.getId());
+            difflist.removeIf(p -> p.getId() == planet.getId());
         }
         for (Planet planet: Planets.unhabitable_planets)
         {
-            difflist.remove(planet.getId());
+            difflist.removeIf(p -> p.getId() == planet.getId());
         }
 
         List<Planet> PotentialEnemyPlanet = findPointsInCircle(src_planet,radius,difflist);
@@ -225,8 +226,8 @@ public class MyDataAnalysis
 
     public static Planet getDefPlanet()
     {
-        if (DefensePlanets.isEmpty()) return null;
-
+        if (DefensePlanets.defPlanets.isEmpty()) return null;
+        DefensePlanets.logContainer();
         //System.out.println("DefensePlanets.getTheHighestKey(): " + DefensePlanets.getTheHighestKey());
         if(DefensePlanets.getTheHighestKey() > frequencyLimit)
         {

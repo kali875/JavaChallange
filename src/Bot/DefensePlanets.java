@@ -70,4 +70,14 @@ public class DefensePlanets
     public static boolean isEmpty() {
         return defPlanets.isEmpty();
     }
+
+    public static void logContainer() {
+        for(Map.Entry<Integer, List<Planet>> entry : defPlanets.entrySet()) {
+            StringBuilder text = new StringBuilder(String.valueOf(entry.getKey()) + ": ");
+            for (Planet planet : entry.getValue()) {
+                text.append(" ").append(planet.getId());
+            }
+            System.out.println(text);
+        }
+    }
 }
