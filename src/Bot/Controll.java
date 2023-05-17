@@ -32,21 +32,19 @@ public class Controll
     public static List<GameAction> Commands = new ArrayList<GameAction>();
     public static List<challenge.game.model.WormHole> wormHoles = new ArrayList<>();
 
-    private static long shieldTimer = 0;
-    private static long lastShieldAttempt = 0;
-
     public static boolean gameStarted = false;
     public static int doingSomething = 0;
-    private static double whatToDoMultiplier = 2.75;
-    private static long inactivity_timer = 0;
-    private static long lastInactivityCheck = 0;
+    boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.75;
+    private static DecisionHandler decisionHandler = new DecisionHandler();
 
     public static void onGameStarted(Game game_data) {
         game = game_data;
         InitialDataAnalysis initialDataAnalysis = new InitialDataAnalysis(game);
         List<Map.Entry<Planet, List<Planet>>> clusters = initialDataAnalysis.getClusters();
+        decisionHandler.CalculatePlayerPlanets(Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size());
+        decisionHandler.calculateDefAndAttackLimit(game);
         for (int i = 0; i < game.getSettings().getMaxWormHolesPerPlayer(); i++) {
-            WormHole.sendWormHole(Planets.basePlanet.getX() + i -1, Planets.basePlanet.getY() + 1,
+            WormHole.sendWormHole(Planets.basePlanet.getX() + i - 1, Planets.basePlanet.getY() + 1,
                                     clusters.get(i).getKey().getX() + 1, clusters.get(i).getKey().getY());
             challenge.game.model.WormHole wh = new challenge.game.model.WormHole();
             wh.setPlayer(JavalessWonders.getCurrentPlayer().getId());
@@ -57,13 +55,23 @@ public class Controll
             wh.setYb((int)clusters.get(i).getKey().getY());
             wormHoles.add(wh);
         }
-        for (int i = 0; i < game.getSettings().getMaxConcurrentActions(); i++)
-            doSomething();
+        for (int i = 0; i < game.getSettings().getMaxConcurrentActions() - game.getSettings().getMaxWormHolesPerPlayer(); i++)
+            decisionHandler.handle();
         System.out.println("Map size: height: " + game.getSettings().getHeight() + " - width: " + game.getSettings().getWidth());
+    }
+
+    private static void checkForActionStuck() {
+        // it is possible that handler waits for action replenishment but stuck and become passive
+        if (Actions.getRemainingActionCount() > 2 || (game.getSettings().getMaxConcurrentActions() <= 3 && Actions.getRemainingActionCount() > 1))
+            handleReplenishedAction();
     }
 
     public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect)
     {
+        if (!decisionHandler.isLateGamePhase())
+            if ((double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.75)
+                decisionHandler.reachedLateGamePhase();
+
         UILogger.log_string("Gravity Wave Crossing Action Effect happened :)");
         UILogger.log_string("Type: ");
         UILogger.log_actionEffectType_arraylist(actionEffect.getEffectChain());
@@ -82,13 +90,12 @@ public class Controll
             Planets.onPlanetDestroyed(actionEffect.getSourceId());
 
         if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) {
-            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.inhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
-            //System.out.println(threshold);
+            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
             MyDataAnalysis.setFrequencyLimit((int) threshold);
             MyDataAnalysis.analData(actionEffect);
         };
-        checkInactivity();
-        doSomething();
+
+        checkForActionStuck();
     }
 
 
@@ -102,14 +109,11 @@ public class Controll
         UILogger.log_string(".............................................");
 
         if (actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_DESTROYED)
-            || actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_TIMEOUT)
+                || actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_TIMEOUT)
         ) {
-            Planets.planetsShielded.removeIf(p -> p.getId() == actionEffect.getAffectedMapObjectId());
-            shieldTimer = 0;
-            lastShieldAttempt = 0;
+            decisionHandler.resetShieldData(actionEffect.getAffectedMapObjectId());
         }
         if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) MyDataAnalysis.analData(actionEffect);
-        checkInactivity();
     }
 
     private static void doneSomething() {
@@ -222,6 +226,10 @@ public class Controll
             UILogger.log_string("Unknown planet shot! -> " + closestPlanet.getSecond().getSecond().getId());
             doneSomething();
         }
+    public static void handleReplenishedAction() {
+        while (decisionHandler.isDecisionHandlerHandlingAnAction()) continue;
+        if (Actions.getRemainingActionCount() >= 1)
+            decisionHandler.handle();
     }
 
     public static double calculateScatterLimit(int totalPlanets, int numPlayers, int nonHabitablePlanets, int ownedPlanets, int destroyedPlanets)

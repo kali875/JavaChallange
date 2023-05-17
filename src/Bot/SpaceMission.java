@@ -8,6 +8,7 @@ import challenge.game.event.action.SpaceMissionAction;
 import challenge.game.model.Planet;
 import org.glassfish.grizzly.utils.Pair;
 
+import java.util.List;
 import java.util.Random;
 
 public class SpaceMission
@@ -23,8 +24,14 @@ public class SpaceMission
 
     public SpaceMissionAction planSpaceMission() {
         Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets(false);
-        if (closestPlanet == null) throw new RuntimeException("There's no planet left to send a space mission...");
-        return Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
+        Pair<Pair<Double, Pair<Planet, Planet>>, List<Integer>> closestPlanetWH = Planets.findClosestPlanetsWH(false);
+        if (closestPlanet == null && closestPlanetWH == null) throw new RuntimeException("There's no planet left to send a space mission...");
+        if (closestPlanet.getFirst() <= closestPlanetWH.getFirst().getFirst()) {
+            return Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
+        } else if (closestPlanetWH.getSecond().size() == 2){
+            return Bot.SpaceMission.sendSpaceMissionThroughWH(closestPlanetWH.getFirst().getSecond().getFirst(), closestPlanetWH.getFirst().getSecond().getSecond(), closestPlanetWH.getSecond().get(0), closestPlanetWH.getSecond().get(1));
+        }
+        throw new RuntimeException("Couldn't start the space mission, unexpected behaviour");
     }
 
     public static SpaceMissionAction sendSpaceMission(Planet originalPlanet, Planet targetPlanet) {

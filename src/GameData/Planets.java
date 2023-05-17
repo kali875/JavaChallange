@@ -18,6 +18,7 @@ public class Planets {
     public static List<Planet> planetsShielded = new ArrayList<>();
     public static Planet basePlanet = null;
     private static int radius = 10;
+    public static int colonised_planet_count = 0;
 
     public static void setPlanets(List<Planet> _planets) {
         planets = _planets;
@@ -67,6 +68,7 @@ public class Planets {
         if (planet_captured != null) {
             planet_captured.setPlayer(JavalessWonders.getCurrentPlayer().getId());
             planets_owned.add(planet_captured);
+            colonised_planet_count++;
         }
     }
 

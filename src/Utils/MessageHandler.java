@@ -115,8 +115,7 @@ public class MessageHandler {
                 if (newActionCount > Actions.getRemainingActionCount() && Controll.gameStarted) {
                     Actions.onActionAttributeChange(newActionCount);
 
-                    do Controll.doSomething();
-                    while (Actions.getRemainingActionCount() - Controll.doingSomething > 3);
+                    Controll.handleReplenishedAction();
                 }
                 if (newActionCount == 0 && !Controll.gameStarted) Controll.gameStarted = true;
 

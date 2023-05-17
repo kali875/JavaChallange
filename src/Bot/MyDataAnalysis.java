@@ -27,6 +27,17 @@ public class MyDataAnalysis
     //GravityWaveCrossing
     static  int radius= 10;
     static int StepRange = 10;
+    public static int NecessaryPlanetNumber(int ShieldBuildTime, long ShieldDuration, long MaxAction)
+    {
+        long SumTime = ShieldBuildTime + ShieldDuration;
+        int CountPlanet = 1;
+
+        while (SumTime * CountPlanet < ShieldDuration * MaxAction)
+        {
+            CountPlanet++;
+        }
+        return CountPlanet;
+    }
     public static void setFrequencyLimit(int frequencyLimit) {
         EnemyDataAnalysis.frequencyLimit = frequencyLimit;
     }
