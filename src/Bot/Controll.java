@@ -40,7 +40,12 @@ public class Controll
     private static double whatToDoMultiplier = 2.75;
     private static long inactivity_timer = 0;
     private static long lastInactivityCheck = 0;
+    public static int DefAndAttackLimit;
 
+    static double UninhabitablePercentage = 0.3;
+
+    static int PlayerPlanetsAroundNumber = 0;
+    boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.75;
     public void StartStrategy()
     {
 
@@ -49,14 +54,60 @@ public class Controll
     {
 
     }
-
+    void Controlling()
+    {
+        if (!isLateGamePhase)
+        {
+            /** EarlyGame**/
+            if(Planets.getPlanets_owned().size() > PlayerPlanetsAroundNumber)
+            {
+                /** We have around Planet number limit**/
+                //DefendAttack  First High priority enemyplanet
+                //DefAndAttackMethod()
+                if(Planets.getPlanets_owned().size() == DefAndAttackLimit)
+                {
+                    DefAndAttackMethod();
+                }
+                else
+                {
+                    /** double shooting and Def**/
+                    // double shooting and Def
+                }
+            }
+            else
+            {
+                //If have High EnemyDetected Planet Shoot
+                /** SpaceMission,ShootPlanet**/
+                //SpaceMission
+            }
+        }
+        else
+        {
+            /** LateGame**/
+            if(Planets.getPlanets_owned().size() >= DefAndAttackLimit)
+            {
+                /** double shooting and Def**/
+                // double shooting and Def
+            }
+            else if(Planets.getPlanets_owned().size() == DefAndAttackLimit)
+            {
+                DefAndAttackMethod();
+            }
+            else
+            {
+                /** little Planets number**/
+                // little shoot more def
+            }
+        }
+    }
     public static void onGameStarted(Game game_data) {
         game = game_data;
         InitialDataAnalysis initialDataAnalysis = new InitialDataAnalysis(game);
         List<Map.Entry<Planet, List<Planet>>> clusters = initialDataAnalysis.getClusters();
+        PlayerPlanetsAroundNumber = CalculatePlayerPlanets(Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size());
         for (int i = 0; i < game.getSettings().getMaxWormHolesPerPlayer(); i++) {
             WormHole.sendWormHole(Planets.basePlanet.getX() + i + 1, Planets.basePlanet.getY() + i + 1,
-                                    clusters.get(i).getKey().getX(), clusters.get(i).getKey().getY());
+                    clusters.get(i).getKey().getX(), clusters.get(i).getKey().getY());
             challenge.game.model.WormHole wh = new challenge.game.model.WormHole();
             wh.setPlayer(JavalessWonders.getCurrentPlayer().getId());
             wh.setId(-1);
@@ -110,7 +161,7 @@ public class Controll
         UILogger.log_string(".............................................");
 
         if (actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_DESTROYED)
-            || actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_TIMEOUT)
+                || actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_TIMEOUT)
         ) {
             Planets.planetsShielded.removeIf(p -> p.getId() == actionEffect.getAffectedMapObjectId());
             shieldTimer = 0;
@@ -312,5 +363,36 @@ public class Controll
     public static int normalizeValue(double value, double minValue, double maxValue, int normalizedMin, int normalizedMax) {
         double normalizedValue = ((value - minValue) / (maxValue - minValue)) * (normalizedMax - normalizedMin) + normalizedMin;
         return (int) Math.round(normalizedValue);
+    }
+    public void DefAndAttackMethod()
+    {
+        int idx = 0;
+        List<Planet> temp = new ArrayList<>();
+        temp.addAll(Planets.unhabitable_planets);
+        for (Planet Originplanet: Planets.getPlanets_owned())
+        {
+            if(!temp.isEmpty())
+            {
+                for (Planet TargetPlanet:temp)
+                {
+                    Bot.MBH.sendMBH(Originplanet.getId(),TargetPlanet.getId());
+                    Shield.erectShield(Originplanet);
+                    temp.remove(idx);
+                    idx++;
+                    temp.size();
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    public static int CalculatePlayerPlanets(int totalPlanets, int numPlayers)
+    {
+        int inhabitablePlanets = (int) (totalPlanets * (1 - UninhabitablePercentage));
+        int playerPlanets = inhabitablePlanets / numPlayers;
+        return playerPlanets;
     }
 }
