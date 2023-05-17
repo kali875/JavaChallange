@@ -13,28 +13,28 @@ import java.util.*;
 import java.util.List;
 
 public class InitialDataAnalysis {
-    Game gameData;
-    GameSettings gameSettings;
+    public static Game gameData;
+    public static GameSettings gameSettings;
     /* Base Related */
-    int height;
-    int width;
-    int numOfActions;
-    int unitTime;
-    double unitSpeed;
+    public static int height;
+    public static int width;
+    public static int numOfActions;
+    public static int unitTime;
+    public static double unitSpeed;
     /* Wormhole Related */
-    int maxWormHoles;
-    int wormHoleBuildTime;
+    public static int maxWormHoles;
+    public static int wormHoleBuildTime;
     /* Passivity Related */
-    int passivityThreshHoldTime;
+    public static int passivityThreshHoldTime;
     /* Shield Related */
-    int shieldBuildTime;
-    int shieldDurationTime;
-    double shieldEfficiency;
+    public static int shieldBuildTime;
+    public static int shieldDurationTime;
+    public static double shieldEfficiency;
     /* World Related */
-    World world;
-    int numOfPlanets;
-    int numOfWormHoles;
-    double planetDensity;
+    public static  World world;
+    public static int numOfPlanets;
+    public static int numOfWormHoles;
+    public static double planetDensity;
 
     public InitialDataAnalysis(Game _game) {
         if (_game != null) {
@@ -81,7 +81,7 @@ public class InitialDataAnalysis {
         return min;
     }
 
-    public double calculateAngle(Planet p1, Planet p2) {
+    public static double calculateAngle(Planet p1, Planet p2) {
         double deltaX = p2.getX() - p1.getX();
         double deltaY = p2.getY() - p1.getY();
         double angleRadians = Math.atan2(deltaY, deltaX);

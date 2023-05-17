@@ -28,9 +28,14 @@ public class OnGoingMBHShots {
     }
 
     public static boolean isOngoingMBHShotToTarget(int planet_id) {
-        if (shots.isEmpty() && maybe_will_shot.isEmpty()) return false;
-        boolean match_possible_targets = maybe_will_shot.stream().filter(Objects::nonNull).anyMatch(planet -> planet.getId() == planet_id);
-        if (match_possible_targets) return true;
-        return shots.stream().filter(Objects::nonNull).anyMatch(planet -> planet.getId() == planet_id);
+        try{
+            if (shots.isEmpty() && maybe_will_shot.isEmpty()) return false;
+            boolean match_possible_targets = maybe_will_shot.stream().filter(Objects::nonNull).anyMatch(planet -> planet.getId() == planet_id);
+            if (match_possible_targets) return true;
+            return shots.stream().filter(Objects::nonNull).anyMatch(planet -> planet.getId() == planet_id);
+        }catch (Exception e){
+            System.out.println(e);
+        }
+        return false;
     }
 }

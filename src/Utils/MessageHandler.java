@@ -101,7 +101,7 @@ public class MessageHandler {
 
     private void handleActionResponse(ActionResponse actionResponse) {
         // TODO: Implement this
-        UILogger.log_string(actionResponse.toString() + "targetid" + actionResponse.getAction().getTargetId());
+        UILogger.log_string(actionResponse.toString() + "targetid=" + (actionResponse.getAction() != null ? actionResponse.getAction().getTargetId() : "NONE"));
     }
 
     private void handleAttributeChange(AttributeChanges attributeChanges) {

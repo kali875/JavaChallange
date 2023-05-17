@@ -147,7 +147,6 @@ public class Main
 
         logger_heartbeat.start();
         frame.setVisible(true);
-
     }
     public DefaultTableModel GenerateWorld(long width,long height)
     {

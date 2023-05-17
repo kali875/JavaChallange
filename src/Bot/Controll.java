@@ -41,29 +41,20 @@ public class Controll
     private static long inactivity_timer = 0;
     private static long lastInactivityCheck = 0;
 
-    public void StartStrategy()
-    {
-
-    }
-    public void ChangeStrategy()
-    {
-
-    }
-
     public static void onGameStarted(Game game_data) {
         game = game_data;
         InitialDataAnalysis initialDataAnalysis = new InitialDataAnalysis(game);
         List<Map.Entry<Planet, List<Planet>>> clusters = initialDataAnalysis.getClusters();
         for (int i = 0; i < game.getSettings().getMaxWormHolesPerPlayer(); i++) {
-            WormHole.sendWormHole(Planets.basePlanet.getX() + i + 1, Planets.basePlanet.getY() + i + 1,
-                                    clusters.get(i).getKey().getX(), clusters.get(i).getKey().getY());
+            WormHole.sendWormHole(Planets.basePlanet.getX() + i -1, Planets.basePlanet.getY() + 1,
+                                    clusters.get(i).getKey().getX() + 1, clusters.get(i).getKey().getY());
             challenge.game.model.WormHole wh = new challenge.game.model.WormHole();
             wh.setPlayer(JavalessWonders.getCurrentPlayer().getId());
             wh.setId(-1);
-            wh.setX((int)Planets.basePlanet.getX() + i + 1);
-            wh.setY((int)Planets.basePlanet.getY() + i + 1);
-            wh.setXb((int)clusters.get(i).getKey().getX() + i + 1);
-            wh.setYb((int)clusters.get(i).getKey().getY() + i + 1);
+            wh.setX((int)Planets.basePlanet.getX() + i -1);
+            wh.setY((int)Planets.basePlanet.getY() + 1);
+            wh.setXb((int)clusters.get(i).getKey().getX() + 1);
+            wh.setYb((int)clusters.get(i).getKey().getY());
             wormHoles.add(wh);
         }
         for (int i = 0; i < game.getSettings().getMaxConcurrentActions(); i++)
@@ -91,12 +82,13 @@ public class Controll
             Planets.onPlanetDestroyed(actionEffect.getSourceId());
 
         if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) {
-            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
+            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.inhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
             //System.out.println(threshold);
             MyDataAnalysis.setFrequencyLimit((int) threshold);
             MyDataAnalysis.analData(actionEffect);
         };
         checkInactivity();
+        doSomething();
     }
 
 
@@ -199,7 +191,7 @@ public class Controll
                 if (closestPlanet.getFirst() <= closestPlanetWH.getFirst().getFirst()) {
                     Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
                     UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
-                }else if(closestPlanetWH.getSecond().size() == 2){
+                }else if(closestPlanetWH.getSecond().size() == 2 && closestPlanetWH.getSecond().get(0) != -1 && closestPlanetWH.getSecond().get(1) != -1){
                     Bot.SpaceMission.sendSpaceMissionThroughWH(closestPlanetWH.getFirst().getSecond().getFirst(), closestPlanetWH.getFirst().getSecond().getSecond(), closestPlanetWH.getSecond().get(0), closestPlanetWH.getSecond().get(1));
                     UILogger.log_string("Space Mission Wormhole Sent! -> " + closestPlanetWH.getFirst().getSecond().getSecond().getId());
                 }

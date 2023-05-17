@@ -35,7 +35,7 @@ public class MyTask extends TimerTask {
     }
     public void UnhabitablePlanets()
     {
-        for (Planet planet : Planets.unhabitable_planets)
+        for (Planet planet : Planets.inhabitable_planets)
         {
             GameWorld.getModel().setValueAt("u",(int)planet.getX(),(int)planet.getY());
         }

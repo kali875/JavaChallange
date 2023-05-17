@@ -11,7 +11,7 @@ public class Planets {
 
     private static List<Planet> planets = new ArrayList<>();
     private static List<Planet> planets_owned = new ArrayList<>();
-    public static List<Planet> unhabitable_planets = new ArrayList<>();
+    public static List<Planet> inhabitable_planets = new ArrayList<>();
     public static List<Planet> destroyed_planets = new ArrayList<>();
     private static List<Planet> ignored_planets = new ArrayList<>();
     public static int numberOfAllPlanets = 0;
@@ -44,7 +44,7 @@ public class Planets {
         }
         planets.removeIf(p -> p.getId() == planet_id);
         planets_owned.removeIf(p -> p.getId() == planet_id);
-        unhabitable_planets.removeIf(pID -> pID.getId() == planet_id);
+        inhabitable_planets.removeIf(pID -> pID.getId() == planet_id);
         DefensePlanets.removePlanet(planet_id);
         OnGoingMBHShots.onPlanetExploded(planet_id);
     }
@@ -62,7 +62,7 @@ public class Planets {
 
     public static void onPlanetCaptured(int planet_id) {
         // Ha túl gyorsan hajt végre akciókat a Bot, néha véletlen nem lakhatónak jelöl meg egy lakható bolygót
-        unhabitable_planets.removeIf(planet -> planet.getId() == planet_id);
+        inhabitable_planets.removeIf(planet -> planet.getId() == planet_id);
         Planet planet_captured = getPlanetByID(planet_id);
         if (planet_captured != null) {
             planet_captured.setPlayer(JavalessWonders.getCurrentPlayer().getId());
@@ -71,7 +71,7 @@ public class Planets {
     }
 
     public static void planetIsUnhabitable(Planet planet) {
-        unhabitable_planets.add(planet);
+        inhabitable_planets.add(planet);
     }
 
     public static List<Planet> getPlanets_owned() {
@@ -103,7 +103,7 @@ public class Planets {
             if (OnGoingMBHShots.isOngoingMBHShotToTarget(planet.getId())) continue;
             if (planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId()) continue;
             if (!shallIncludeUnhabitablePlanets)
-                if (unhabitable_planets.stream().anyMatch(p -> p.getId() == planet.getId()))
+                if (inhabitable_planets.stream().anyMatch(p -> p.getId() == planet.getId()))
                     continue;
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
             if (isPlanetShielded(planet)) continue;
@@ -137,7 +137,7 @@ public class Planets {
             if (OnGoingMBHShots.isOngoingMBHShotToTarget(planet.getId())) continue;
             if (planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId()) continue;
             if (!shallIncludeUnhabitablePlanets)
-                if (unhabitable_planets.stream().anyMatch(p -> p.getId() == planet.getId()))
+                if (inhabitable_planets.stream().anyMatch(p -> p.getId() == planet.getId()))
                     continue;
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
             if (isPlanetShielded(planet)) continue;
@@ -156,7 +156,7 @@ public class Planets {
     }
 
     public static Pair<Double, Pair<Planet, Planet>> findClosestUnhabitablePlanet() {
-        if (unhabitable_planets.isEmpty()) return null;
+        if (inhabitable_planets.isEmpty()) return null;
 
         SortedMap<Double, Pair<Planet, Planet>> closestPlanets = new TreeMap<>(new Comparator<Double>() {
             @Override
@@ -165,7 +165,7 @@ public class Planets {
             }
         });
 
-        Iterator<Planet> iterator = unhabitable_planets.iterator();
+        Iterator<Planet> iterator = inhabitable_planets.iterator();
         while (iterator.hasNext()) {
             Planet planet = iterator.next();
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;

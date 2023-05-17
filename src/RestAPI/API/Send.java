@@ -108,7 +108,7 @@ public class Send
             //"{ \"bots\": [ 0 ], \"gameType\": \"SINGLE_PLAYER\"}"
 
             //json = "{\"bots\": [1],\"gameType\": \"SINGLE_PLAYER\"}";
-            json = "{\"bots\":[8, 8, 8, 8],\"gameType\":\"PRACTISE_GAME\"}";
+            json = "{\"bots\":[9, 9, 9, 9],\"gameType\":\"PRACTISE_GAME\"}";
 
             // TODO: KI NE KOMMENTELD CSAK HA MEGBESZÉLTÜK
             //json = "{\"bots\": [],\"gameType\": \"QUALIFYING\"}";
