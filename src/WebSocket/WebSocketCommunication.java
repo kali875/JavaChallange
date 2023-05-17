@@ -20,16 +20,21 @@ public class WebSocketCommunication
     private JsonMapper jsonMapper= new JsonMapper();
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static Session websocket_session;
+    private static MessageHandler messageHandler;
+
+    public WebSocketCommunication() {
+        this.messageHandler = new MessageHandler();
+    }
+
     @OnOpen
     public void onOpen(Session session) {
         websocket_session = session;
         UILogger.log_string("Connected to WebSocket server!");
     }
-
     @OnMessage
     public void onMessage(String message)
     {
-        new MessageHandler().handleMessage(message);
+        this.messageHandler.handleMessage(message);
     }
 
     @OnClose

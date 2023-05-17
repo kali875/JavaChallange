@@ -109,7 +109,8 @@ public class Planets {
             if (isPlanetShielded(planet)) continue;
 
             Pair<Double, List<Integer>> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet, false);
-            closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
+            if(minimum.getSecond() != null && minimum.getSecond().get(0) != -1)
+                closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
         }
 
         if (closestPlanets.isEmpty()) return null;
@@ -142,7 +143,9 @@ public class Planets {
             if (isPlanetShielded(planet)) continue;
 
             Pair<Double, List<Integer>> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet, true);
-            closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
+            if(minimum.getSecond() != null && minimum.getSecond().get(0) != -1)
+                closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
+            temp.clear();
             temp.add(minimum.getSecond().get(1));
             temp.add(minimum.getSecond().get(2));
         }
@@ -162,18 +165,20 @@ public class Planets {
             }
         });
 
-        for (Planet planet : unhabitable_planets) {
-            if (isPlanetDestroyed(planet.getId())) {
-                unhabitable_planets.remove(planet);
-                OnGoingMBHShots.onPlanetExploded(planet.getId());
-                continue;
-            }
+        Iterator<Planet> iterator = unhabitable_planets.iterator();
+        while (iterator.hasNext()) {
+            Planet planet = iterator.next();
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
             if (isPlanetShielded(planet)) continue;
             if (isPlanetIgnored(planet)) continue;
 
             Pair<Double, List<Integer>> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet, false);
-            closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
+            if(minimum.getSecond() != null && minimum.getSecond().get(0) != -1)
+                closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
+            if (isPlanetDestroyed(planet.getId())) {
+                iterator.remove(); // Safely remove the element
+                OnGoingMBHShots.onPlanetExploded(planet.getId());
+            }
         }
 
         if (closestPlanets.isEmpty()) return null;
@@ -181,12 +186,15 @@ public class Planets {
     }
 
     public static Planet findClosestOwnedPlanetToTarget(Planet target) {
-        return planets_owned.get(findMinimumDistanceBetweenTargetAndOwnedPlanets(target, false).getSecond().get(0));
+        Pair<Double, List<Integer>> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(target, false);
+        if(minimum.getSecond() != null && minimum.getSecond().get(0) != -1)
+            return planets_owned.get(minimum.getSecond().get(0));
+        return null;
     }
 
     private static Pair<Double, List<Integer>> findMinimumDistanceBetweenTargetAndOwnedPlanets(Planet target, boolean doWH) {
         double minimum_distance = Double.MAX_VALUE;
-        int minimum_distance_id = 0;
+        int minimum_distance_id = -1;
         int wormHoleId = -1;
         int wormHoleSide = -1;
         for (int i = 0; i < planets_owned.size(); i++) {

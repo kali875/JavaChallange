@@ -152,8 +152,11 @@ public class Controll
         if (Actions.getRemainingActionCount() > 1) {
             Planet p = EnemyDataAnalysis.GetEnemyPlanet();
             if (p != null) {
-                for (int i = 0; i < 2; i++)
-                    Bot.MBH.sendMBH(Planets.findClosestOwnedPlanetToTarget(p).getId(), p.getId());
+                for (int i = 0; i < 2; i++) {
+                    Planet q = Planets.findClosestOwnedPlanetToTarget(p);
+                    if(q != null)
+                        Bot.MBH.sendMBH(q.getId(), p.getId());
+                }
                 UILogger.log_string("Possible Enemy planet shot! -> " + p.getId());
                 doneSomething();
                 return;
@@ -192,19 +195,16 @@ public class Controll
             Pair<Double, Pair<Planet, Planet>> closestInhabitablePlanet = Planets.findClosestUnhabitablePlanet();
             if (closestInhabitablePlanet != null) OnGoingMBHShots.possibleTarget(closestInhabitablePlanet.getSecond().getSecond());
 
-            if(closestPlanet != null && closestPlanetWH != null && closestInhabitablePlanet == null){
-                if ( closestPlanet.getFirst() <= closestPlanetWH.getFirst().getFirst()) {
+            if(closestPlanet != null && closestPlanetWH != null){
+                if (closestPlanet.getFirst() <= closestPlanetWH.getFirst().getFirst()) {
                     Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
                     UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
-                    doneSomething();
-                    return;
-                }else if (closestPlanet.getFirst() > closestPlanetWH.getFirst().getFirst()){
-                    Bot.SpaceMission.sendSpaceMissionThroughWH(closestPlanetWH.getFirst().getSecond().getFirst(), closestPlanetWH.getFirst().getSecond().getSecond(), closestPlanetWH.getSecond().get(1), closestPlanetWH.getSecond().get(2));
-                    UILogger.log_string("Space Mission Sent! -> " + closestPlanetWH.getFirst().getSecond().getSecond().getId());
-                    System.out.println("Space mission with WH id: " + closestPlanetWH.getSecond().get(1));
-                    doneSomething();
-                    return;
+                }else if(closestPlanetWH.getSecond().size() == 2){
+                    Bot.SpaceMission.sendSpaceMissionThroughWH(closestPlanetWH.getFirst().getSecond().getFirst(), closestPlanetWH.getFirst().getSecond().getSecond(), closestPlanetWH.getSecond().get(0), closestPlanetWH.getSecond().get(1));
+                    UILogger.log_string("Space Mission Wormhole Sent! -> " + closestPlanetWH.getFirst().getSecond().getSecond().getId());
                 }
+                doneSomething();
+                return;
             }
             if(closestInhabitablePlanet != null){
                 if (closestPlanet == null) {
@@ -212,24 +212,24 @@ public class Controll
                     OnGoingMBHShots.onShot(closestInhabitablePlanet.getSecond().getSecond());
                     UILogger.log_string("Unhabitable planet shot! -> " + closestInhabitablePlanet.getSecond().getSecond().getId());
                     doneSomething();
-                    doneSomething();
                     return;
                 }
                 if (closestInhabitablePlanet.getFirst() * whatToDoMultiplier > closestPlanet.getFirst()) {
                     Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
                     UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
+                    doneSomething();
                 } else {
                     Bot.MBH.sendMBH(closestInhabitablePlanet.getSecond().getFirst().getId(), closestInhabitablePlanet.getSecond().getSecond().getId());
                     OnGoingMBHShots.onShot(closestInhabitablePlanet.getSecond().getSecond());
-                    UILogger.log_string("Unhabitable planet shot! -> " + closestInhabitablePlanet.getSecond().getSecond().getId());
+                    UILogger.log_string("Inhabitable planet shot! -> " + closestInhabitablePlanet.getSecond().getSecond().getId());
+                    doneSomething();
                 }
             }
         } else if(closestPlanet != null){
             Bot.MBH.sendMBH(closestPlanet.getSecond().getFirst().getId(), closestPlanet.getSecond().getSecond().getId());
             UILogger.log_string("Unknown planet shot! -> " + closestPlanet.getSecond().getSecond().getId());
+            doneSomething();
         }
-
-        doneSomething();
     }
 
     public static double calculateScatterLimit(int totalPlanets, int numPlayers, int nonHabitablePlanets, int ownedPlanets, int destroyedPlanets)
