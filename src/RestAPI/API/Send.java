@@ -107,7 +107,8 @@ public class Send
             //{"gameId":"96e8ae54-1f15-43ac-a55a-f30d33d1ee6e","gameConfig":{"gameType":"SINGLE_PLAYER","bots":[0]}}
             //"{ \"bots\": [ 0 ], \"gameType\": \"SINGLE_PLAYER\"}"
 
-            json = "{\"bots\": [1, 3, 5, 8],\"gameType\": \"SINGLE_PLAYER\"}";
+            //json = "{\"bots\": [1],\"gameType\": \"SINGLE_PLAYER\"}";
+            json = "{\"bots\":[1],\"gameType\":\"PRACTISE_GAME\"}";
 
             // TODO: KI NE KOMMENTELD CSAK HA MEGBESZÉLTÜK
             //json = "{\"bots\": [],\"gameType\": \"QUALIFYING\"}";

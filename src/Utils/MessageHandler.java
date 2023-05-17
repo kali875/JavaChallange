@@ -5,6 +5,7 @@ import GameData.Actions;
 import GameData.JavalessWonders;
 import GameData.OnGoingSpaceMissions;
 import GameData.Planets;
+import challenge.game.event.ConnectionResult;
 import challenge.game.event.EventType;
 import challenge.game.event.GameEvent;
 import challenge.game.event.action.ActionResponse;
@@ -16,6 +17,7 @@ import challenge.game.event.actioneffect.WormHoleBuiltEffect;
 import challenge.game.event.attibute.AttributeChanges;
 import challenge.game.model.Game;
 import challenge.game.model.Planet;
+import challenge.game.model.WormHole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
@@ -25,12 +27,16 @@ public class MessageHandler {
     public MessageHandler() {}
     private GameEvent gameEvent;
     private JsonMapper jsonMapper= new JsonMapper();
+
+    private int playerID = -1;
     public void handleMessage(String message) {
         try {
             gameEvent = jsonMapper.readValue(message, GameEvent.class);
             //Controll.onGameEvent(gameEvent);
 
-            if (gameEvent.getEventType() == EventType.GAME_STARTED) {
+            if (gameEvent.getEventType() == EventType.CONNECTION_RESULT) {
+                playerID = gameEvent.getConnectionResult().getPlayerId();
+            } else if (gameEvent.getEventType() == EventType.GAME_STARTED) {
                 handleGameStarted(gameEvent.getGame());
             } else if (gameEvent.getEventType() == EventType.GAME_ENDED) {
                 UILogger.log_string(message);
@@ -62,7 +68,16 @@ public class MessageHandler {
     }
 
     private void handleWormholeBuilt(WormHoleBuiltEffect wormHoleBuiltEffect) {
-        // TODO: handle wormhole
+        WormHole temp = null;
+        for (WormHole wh : Controll.wormHoles){
+            if(wh.getId() == -1) temp = wh;
+        }
+        if(temp != null){
+            Controll.wormHoles.remove(temp);
+            temp.setId(wormHoleBuiltEffect.getWormHoleId());
+            Controll.wormHoles.add(temp);
+        }
+
         Controll.onActionEffect(wormHoleBuiltEffect);
     }
 
@@ -74,7 +89,7 @@ public class MessageHandler {
     }
 
     private void handleGameStarted(Game game) {
-        JavalessWonders.setPlayerFromTeams(game.getPlayers());
+        JavalessWonders.setPlayerFromConnectionURLid(playerID, game.getPlayers());
         Planets.setPlanets(game.getWorld().getPlanets());
         Actions.onActionAttributeChange(game.getSettings().getMaxConcurrentActions());
 

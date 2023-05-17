@@ -18,8 +18,8 @@ import java.util.List;
 
 public class ConnectionHandler {
     private final JsonMapper jsonMapper= new JsonMapper();
-    private GameID gameID;
-    private GameKey gameKey;
+    private GameID gameID = new GameID();
+    private GameKey gameKey = new GameKey();
     private GameKey generateKey(JTextField GameKeyTextField) {
         try {
             List<Parameter> Parameters = new ArrayList<Parameter>();
@@ -45,7 +45,7 @@ public class ConnectionHandler {
         }
     }
 
-    private GameID createGame() {
+    private GameID createGame(JTextField gameIDTextField) {
         // csak azért kell, hogy a catchbe a ExistingGameIDParser tudja használni
         String responseBody = "";
         GameID game_id = null;
@@ -59,6 +59,7 @@ public class ConnectionHandler {
             if(send.response != null) {
                 responseBody = send.response.body();
                 game_id = jsonMapper.readValue(send.response.body(), GameID.class);
+                gameIDTextField.setText(game_id.getGameId());
             }
             return game_id;
         } catch (Exception ex) {
@@ -66,6 +67,7 @@ public class ConnectionHandler {
                 String gameID = new ExistingGameIDParser().parseResponseBody(responseBody);
                 game_id = new GameID();
                 game_id.setGameId(gameID);
+                gameIDTextField.setText(game_id.getGameId());
                 return game_id;
             } catch (Exception exception) {
                 System.out.println("There was an error during game creation: " + ex);
@@ -74,10 +76,14 @@ public class ConnectionHandler {
         }
     }
 
-    private boolean connectToWebsocket() {
+    private boolean connectToWebsocket(String playerId, String game_key, String game_id) {
         try {
+            if (!game_key.isEmpty()) gameKey.setKey(game_key);
+            if (!game_id.isEmpty()) gameID.setGameId(game_id);
+            String websocket_uri_string;
+            if (playerId.isEmpty()) websocket_uri_string = "ws://javachallenge.loxon.eu:8081/game?gameId=" + gameID.getGameId() + "&gameKey=" + gameKey.getKey() + "&connectionType=control";
+            else websocket_uri_string = "ws://javachallenge.loxon.eu:8081/game?gameId=" + gameID.getGameId() + "&gameKey=" + gameKey.getKey() + "&connectionType=control";
             // ws://javachallenge.loxon.eu:8081/game?gameId=340bbe66-b1ab-4469-8b07-5bad3e022fb5&gameKey=cb5bc49e-3029-470b-b863-eb56bf6ad8cc&connectionType=visualization
-            String websocket_uri_string = "ws://javachallenge.loxon.eu:8081/game?gameId=" + gameID.getGameId() + "&gameKey=" + gameKey.getKey() + "&connectionType=control";
             UILogger.log_string("Websocket URI was created:\n" + websocket_uri_string);
             URI websocket_uri = new URI(websocket_uri_string);
             return WebSocketCommunication.connect(websocket_uri);
@@ -104,26 +110,31 @@ public class ConnectionHandler {
     };
 
     public void handleGameStart(JTextField GameKeyTextField) {
-        gameKey = generateKey(GameKeyTextField);
-        if (gameKey == null) return;
-        gameID = createGame();
-        if (gameID == null) return;
-        if (!connectToWebsocket()) return;
         startGame();
     }
 
-    public void handleReconnect(JTextField GameKeyTextField) {
-        gameKey = generateKey(GameKeyTextField);
-        if (gameKey == null) return;
-        gameID = createGame();
-        if (gameID == null) return;
-        connectToWebsocket();
+    public void handleWebsocketConnection(String playerID, String game_key, String game_id) {
+        connectToWebsocket(playerID, game_key, game_id);
     }
 
-    public void handleEmergencyStop(JTextField GameKeyTextField) {
+    public void handleGameCreation(JTextField GameKeyTextField, JTextField gameIDTextField) {
         gameKey = generateKey(GameKeyTextField);
         if (gameKey == null) return;
-        gameID = createGame();
+        gameID = createGame(gameIDTextField);
+    }
+
+    public void handleReconnect(JTextField GameKeyTextField, JTextField gameIDTextField, String playerID,  String game_key, String game_id) {
+        gameKey = generateKey(GameKeyTextField);
+        if (gameKey == null) return;
+        gameID = createGame(gameIDTextField);
+        if (gameID == null) return;
+        connectToWebsocket(playerID, game_key, game_id);
+    }
+
+    public void handleEmergencyStop(JTextField GameKeyTextField, JTextField gameIDTextField) {
+        gameKey = generateKey(GameKeyTextField);
+        if (gameKey == null) return;
+        gameID = createGame(gameIDTextField);
         if (gameID == null) return;
         stopGame();
     }

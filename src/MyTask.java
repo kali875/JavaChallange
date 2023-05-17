@@ -1,7 +1,9 @@
+import Bot.Controll;
 import GameData.OnGoingMBHShots;
 import GameData.OnGoingSpaceMissions;
 import GameData.Planets;
 import challenge.game.model.Planet;
+import challenge.game.model.WormHole;
 
 import javax.swing.*;
 import java.util.TimerTask;
@@ -21,6 +23,7 @@ public class MyTask extends TimerTask {
         DestroyedPlanets();
         OnGoingShots();
         OnGoingMissions();
+        WormHoleBuilt();
     }
 
     public void MyPlanets()
@@ -59,6 +62,15 @@ public class MyTask extends TimerTask {
         for (Planet planet : OnGoingSpaceMissions.getSpaceMissionTargets())
         {
             GameWorld.getModel().setValueAt("SM",(int)planet.getX(),(int)planet.getY());
+        }
+    }
+
+    public void WormHoleBuilt()
+    {
+        for (WormHole wh : Controll.wormHoles)
+        {
+            GameWorld.getModel().setValueAt("WHA",(int)wh.getX(),(int)wh.getY());
+            GameWorld.getModel().setValueAt("WHB",(int)wh.getXb(),(int)wh.getYb());
         }
     }
 }

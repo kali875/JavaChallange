@@ -32,4 +32,5 @@ public class GravityWaveCrossing extends ActionEffect {
 	 * 
 	 */
 	@JsonProperty("dir") private double direction;
+	
 }

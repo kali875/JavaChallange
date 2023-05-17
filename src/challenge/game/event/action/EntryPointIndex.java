@@ -1,5 +1,4 @@
 package challenge.game.event.action;
-
 /**
  * A féreglyuk két pontjának tárolója.
  */

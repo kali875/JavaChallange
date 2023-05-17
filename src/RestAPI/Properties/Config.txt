@@ -2,5 +2,5 @@ Email=andras.petroczi@gmail.com
 Team=Javaless Wonders
 BaseURL=http://javachallenge.loxon.eu:8081/game_api/getGameKey?
 CreateGame=http://javachallenge.loxon.eu:8081/game/create/
-PrivateKeyPath=/home/saydome/Desktop/loxon/JavaChallange/src/RestAPI/private.key
-PublicKeyPath=/home/saydome/Desktop/loxon/JavaChallange/src/RestAPI/public.key
+PrivateKeyPath=src/RestAPI/private.key
+PublicKeyPath=src/RestAPI/public.key

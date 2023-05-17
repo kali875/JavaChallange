@@ -19,11 +19,14 @@ public class GameWorldTableRenderer extends DefaultTableCellRenderer {
             return Color.PINK;
         } else if (steak.startsWith("u")) {
             return Color.ORANGE;
+        } else if (steak.startsWith("WHA")) {
+            return Color.GRAY;
+        }else if (steak.startsWith("WHB")) {
+            return Color.BLACK;
         } else if (steak.equals("")) {
             return Color.WHITE;
         }
 
         return super.getBackground();
     }
-
 }

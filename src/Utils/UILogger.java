@@ -33,7 +33,7 @@ public class UILogger {
 
     public static void log_actionEffectType_arraylist(List<ActionEffectType> data) {
         for (ActionEffectType d : data) {
-            log_data = log_data + d + "\n";
+            log_data += d + "\n";
         }
     }
 

@@ -4,29 +4,20 @@ import GameData.Actions;
 import GameData.JavalessWonders;
 import GameData.OnGoingMBHShots;
 import GameData.Planets;
-import Utils.InitialDataAnalysis;
+import DSS.InitialDataAnalysis;
 import Utils.UILogger;
-import challenge.game.event.EventType;
-import challenge.game.event.GameEvent;
 import challenge.game.event.action.ErectShieldAction;
 import challenge.game.event.action.GameAction;
-import challenge.game.event.action.ShootMBHAction;
 import challenge.game.event.actioneffect.ActionEffect;
 import challenge.game.event.actioneffect.ActionEffectType;
 import challenge.game.event.actioneffect.GravityWaveCrossing;
 import challenge.game.model.Game;
 import challenge.game.model.GravityWaveCause;
 import challenge.game.model.Planet;
-import challenge.game.model.Player;
 import challenge.game.settings.GameSettings;
 import org.glassfish.grizzly.utils.Pair;
 
-import javax.swing.Timer;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Controll
 {
@@ -39,6 +30,7 @@ public class Controll
     public static final GameSettings gameSettings = null;
 
     public static List<GameAction> Commands = new ArrayList<GameAction>();
+    public static List<challenge.game.model.WormHole> wormHoles = new ArrayList<>();
 
     private static long shieldTimer = 0;
     private static long lastShieldAttempt = 0;
@@ -60,16 +52,23 @@ public class Controll
 
     public static void onGameStarted(Game game_data) {
         game = game_data;
-
-        InitialDataAnalysis initialDataAnalysis = new InitialDataAnalysis();
+        InitialDataAnalysis initialDataAnalysis = new InitialDataAnalysis(game);
         List<Map.Entry<Planet, List<Planet>>> clusters = initialDataAnalysis.getClusters();
-        clusters.forEach(c -> {
-            System.out.println(c.getKey().getId() + " (" + c.getKey().getX() + " , " + c.getKey().getY() + ")");
-        });
+        for (int i = 0; i < game.getSettings().getMaxWormHolesPerPlayer(); i++) {
+            WormHole.sendWormHole(Planets.basePlanet.getX() + i + 1, Planets.basePlanet.getY() + i + 1,
+                                    clusters.get(i).getKey().getX(), clusters.get(i).getKey().getY());
+            challenge.game.model.WormHole wh = new challenge.game.model.WormHole();
+            wh.setPlayer(JavalessWonders.getCurrentPlayer().getId());
+            wh.setId(-1);
+            wh.setX((int)Planets.basePlanet.getX() + i + 1);
+            wh.setY((int)Planets.basePlanet.getY() + i + 1);
+            wh.setXb((int)clusters.get(i).getKey().getX() + i + 1);
+            wh.setYb((int)clusters.get(i).getKey().getY() + i + 1);
+            wormHoles.add(wh);
+        }
         for (int i = 0; i < game.getSettings().getMaxConcurrentActions(); i++)
             doSomething();
         System.out.println("Map size: height: " + game.getSettings().getHeight() + " - width: " + game.getSettings().getWidth());
-
     }
 
     public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect)
@@ -88,60 +87,25 @@ public class Controll
         if (actionEffect.getInflictingPlayer() != JavalessWonders.getCurrentPlayer().getId()) {
             EnemyDataAnalysis.analyzeData(actionEffect);
         }
-        /*if (actionEffect.getInflictingPlayer() != JavalessWonders.getCurrentPlayer().getId())
-        {
-            //int totalPlanets,                 int numPlayers,             int nonHabitablePlanets,        int ownedPlanets, int destroyedPlanets, int destroyedPlanetScore
-            EnemyDataAnalysis.setFrequencyLimit((int)EnemyPlanetSequenceLimit(Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets()));
-            EnemyDataAnalysis.analyzeData(actionEffect);
-        }
-        else
-        {
-            //setFrequencyLimit                      //int width,                               int length,                              int totalPlanets,                               int numPlayers,                         int nonHabitablePlanets,         int ownedPlanets, int occupiedPlanets, int destroyedPlanetScore
-            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
-            MyDataAnalysis.setFrequencyLimit(normalizeValue(threshold, 0, 1, 1, 100));
-        }*/
         if (actionEffect.getCause() == GravityWaveCause.EXPLOSION)
             Planets.onPlanetDestroyed(actionEffect.getSourceId());
 
         if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) {
             double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
-            System.out.println(threshold);
+            //System.out.println(threshold);
             MyDataAnalysis.setFrequencyLimit((int) threshold);
             MyDataAnalysis.analData(actionEffect);
         };
         checkInactivity();
     }
 
-    /*public static void onGameEvent(GameEvent gameEvent) {
-        if (gameEvent.getEventType() == EventType.ACTION_EFFECT)
-            MyDataAnalysis.analData(gameEvent);
-*//*        if (actionEffect.getInflictingPlayer() != JavalessWonders.getCurrentPlayer().getId())
-        {
-            //int totalPlanets,                 int numPlayers,             int nonHabitablePlanets,        int ownedPlanets, int destroyedPlanets, int destroyedPlanetScore
-            EnemyDataAnalysis.setFrequencyLimit((int)EnemyPlanetSequenceLimit(Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets()));
-            EnemyDataAnalysis.analyzeData(actionEffect);
-        }*//*
-        *//*
-        else
-        {
-              //setFrequencyLimit                      //int width,                               int length,                              int totalPlanets,                               int numPlayers,                         int nonHabitablePlanets,         int ownedPlanets, int occupiedPlanets, int destroyedPlanetScore
-            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
-            MyDataAnalysis.setFrequencyLimit(normalizeValue(threshold, 0, 1, 1, 100));
-        }
-        if (actionEffect.getCause() == GravityWaveCause.EXPLOSION)
-        {
-
-            Planets.onPlanetDestroyed(actionEffect.getSourceId());
-        }
-        doSomething();*//*
-    }*/
 
     public static void onActionEffect(ActionEffect actionEffect) {
         UILogger.log_string("Regular Action Effect happened :)");
         UILogger.log_string("Type: ");
         UILogger.log_actionEffectType_arraylist(actionEffect.getEffectChain());
         UILogger.log_string("Player:" + actionEffect.getInflictingPlayer());
-        UILogger.log_string("Affected Planet (id): " + actionEffect.getAffectedMapObjectId());
+        UILogger.log_string("Affected Object (id): " + actionEffect.getAffectedMapObjectId());
         UILogger.log_string("Time at: " + actionEffect.getTime());
         UILogger.log_string(".............................................");
 
@@ -222,33 +186,45 @@ public class Controll
         // küldetés próbál küldeni
         boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.8;
         Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets(isLateGamePhase);
+        Pair<Pair<Double, Pair<Planet, Planet>>, List<Integer>> closestPlanetWH = Planets.findClosestPlanetsWH(isLateGamePhase);
         if (closestPlanet != null) OnGoingMBHShots.possibleTarget(closestPlanet.getSecond().getSecond());
         if (!isLateGamePhase) {
-            Pair<Double, Pair<Planet, Planet>> closestUnhabitablePlanet = Planets.findClosestUnhabitablePlanet();
-            if (closestUnhabitablePlanet != null) OnGoingMBHShots.possibleTarget(closestUnhabitablePlanet.getSecond().getSecond());
+            Pair<Double, Pair<Planet, Planet>> closestInhabitablePlanet = Planets.findClosestUnhabitablePlanet();
+            if (closestInhabitablePlanet != null) OnGoingMBHShots.possibleTarget(closestInhabitablePlanet.getSecond().getSecond());
 
-            if (closestPlanet != null && closestUnhabitablePlanet == null) {
-                Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
-                UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
-                doneSomething();
-                return;
+            if(closestPlanet != null && closestPlanetWH != null && closestInhabitablePlanet == null){
+                if ( closestPlanet.getFirst() <= closestPlanetWH.getFirst().getFirst()) {
+                    Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
+                    UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
+                    doneSomething();
+                    return;
+                }else if (closestPlanet.getFirst() > closestPlanetWH.getFirst().getFirst()){
+                    Bot.SpaceMission.sendSpaceMissionThroughWH(closestPlanetWH.getFirst().getSecond().getFirst(), closestPlanetWH.getFirst().getSecond().getSecond(), closestPlanetWH.getSecond().get(1), closestPlanetWH.getSecond().get(2));
+                    UILogger.log_string("Space Mission Sent! -> " + closestPlanetWH.getFirst().getSecond().getSecond().getId());
+                    System.out.println("Space mission with WH id: " + closestPlanetWH.getSecond().get(1));
+                    doneSomething();
+                    return;
+                }
             }
-            if (closestPlanet == null) {
-                Bot.MBH.sendMBH(closestUnhabitablePlanet.getSecond().getFirst().getId(), closestUnhabitablePlanet.getSecond().getSecond().getId());
-                OnGoingMBHShots.onShot(closestUnhabitablePlanet.getSecond().getSecond());
-                UILogger.log_string("Unhabitable planet shot! -> " + closestUnhabitablePlanet.getSecond().getSecond().getId());
-                doneSomething();
-                return;
+            if(closestInhabitablePlanet != null){
+                if (closestPlanet == null) {
+                    Bot.MBH.sendMBH(closestInhabitablePlanet.getSecond().getFirst().getId(), closestInhabitablePlanet.getSecond().getSecond().getId());
+                    OnGoingMBHShots.onShot(closestInhabitablePlanet.getSecond().getSecond());
+                    UILogger.log_string("Unhabitable planet shot! -> " + closestInhabitablePlanet.getSecond().getSecond().getId());
+                    doneSomething();
+                    doneSomething();
+                    return;
+                }
+                if (closestInhabitablePlanet.getFirst() * whatToDoMultiplier > closestPlanet.getFirst()) {
+                    Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
+                    UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
+                } else {
+                    Bot.MBH.sendMBH(closestInhabitablePlanet.getSecond().getFirst().getId(), closestInhabitablePlanet.getSecond().getSecond().getId());
+                    OnGoingMBHShots.onShot(closestInhabitablePlanet.getSecond().getSecond());
+                    UILogger.log_string("Unhabitable planet shot! -> " + closestInhabitablePlanet.getSecond().getSecond().getId());
+                }
             }
-            if (closestUnhabitablePlanet.getFirst() * whatToDoMultiplier > closestPlanet.getFirst()) {
-                Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
-                UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
-            } else {
-                Bot.MBH.sendMBH(closestUnhabitablePlanet.getSecond().getFirst().getId(), closestUnhabitablePlanet.getSecond().getSecond().getId());
-                OnGoingMBHShots.onShot(closestUnhabitablePlanet.getSecond().getSecond());
-                UILogger.log_string("Unhabitable planet shot! -> " + closestUnhabitablePlanet.getSecond().getSecond().getId());
-            }
-        } else {
+        } else if(closestPlanet != null){
             Bot.MBH.sendMBH(closestPlanet.getSecond().getFirst().getId(), closestPlanet.getSecond().getSecond().getId());
             UILogger.log_string("Unknown planet shot! -> " + closestPlanet.getSecond().getSecond().getId());
         }

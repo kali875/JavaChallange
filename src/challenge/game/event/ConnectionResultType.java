@@ -1,5 +1,4 @@
 package challenge.game.event;
-
 /**
  * A játékhoz való csatlakozás lehet sikeres és sikertelen.
  * Ennek a két esetnek különböző okait tárolja ez az enum.

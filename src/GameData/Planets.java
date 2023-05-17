@@ -108,12 +108,48 @@ public class Planets {
             if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
             if (isPlanetShielded(planet)) continue;
 
-            Pair<Double, Integer> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet);
-            closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond()), planet));
+            Pair<Double, List<Integer>> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet, false);
+            closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
         }
 
         if (closestPlanets.isEmpty()) return null;
+
         return new Pair<>(closestPlanets.firstKey(), closestPlanets.get(closestPlanets.firstKey()));
+    }
+
+    public static Pair<Pair<Double, Pair<Planet, Planet>>, List<Integer>> findClosestPlanetsWH(boolean shallIncludeUnhabitablePlanets) {
+        SortedMap<Double, Pair<Planet, Planet>> closestPlanets = new TreeMap<>(new Comparator<Double>() {
+            @Override
+            public int compare(Double d1, Double d2) {
+                return Double.compare(d1, d2);
+            }
+        });
+
+        List<Integer> temp = new ArrayList<>();
+
+        for (Planet planet : planets) {
+            if (isPlanetDestroyed(planet.getId())) {
+                planets.remove(planet);
+                OnGoingMBHShots.onPlanetExploded(planet.getId());
+                continue;
+            }
+            if (OnGoingMBHShots.isOngoingMBHShotToTarget(planet.getId())) continue;
+            if (planet.getPlayer() == JavalessWonders.getCurrentPlayer().getId()) continue;
+            if (!shallIncludeUnhabitablePlanets)
+                if (unhabitable_planets.stream().anyMatch(p -> p.getId() == planet.getId()))
+                    continue;
+            if (OnGoingSpaceMissions.isOngoingSpaceMissionToTarget(planet)) continue;
+            if (isPlanetShielded(planet)) continue;
+
+            Pair<Double, List<Integer>> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet, true);
+            closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
+            temp.add(minimum.getSecond().get(1));
+            temp.add(minimum.getSecond().get(2));
+        }
+
+        if (closestPlanets.isEmpty()) return null;
+
+        return new Pair<>(new Pair<>(closestPlanets.firstKey(), closestPlanets.get(closestPlanets.firstKey())), temp);
     }
 
     public static Pair<Double, Pair<Planet, Planet>> findClosestUnhabitablePlanet() {
@@ -136,8 +172,8 @@ public class Planets {
             if (isPlanetShielded(planet)) continue;
             if (isPlanetIgnored(planet)) continue;
 
-            Pair<Double, Integer> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet);
-            closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond()), planet));
+            Pair<Double, List<Integer>> minimum = findMinimumDistanceBetweenTargetAndOwnedPlanets(planet, false);
+            closestPlanets.put(minimum.getFirst(), new Pair<>(planets_owned.get(minimum.getSecond().get(0)), planet));
         }
 
         if (closestPlanets.isEmpty()) return null;
@@ -145,21 +181,55 @@ public class Planets {
     }
 
     public static Planet findClosestOwnedPlanetToTarget(Planet target) {
-        return planets_owned.get(findMinimumDistanceBetweenTargetAndOwnedPlanets(target).getSecond());
+        return planets_owned.get(findMinimumDistanceBetweenTargetAndOwnedPlanets(target, false).getSecond().get(0));
     }
 
-    private static Pair<Double, Integer> findMinimumDistanceBetweenTargetAndOwnedPlanets(Planet target) {
+    private static Pair<Double, List<Integer>> findMinimumDistanceBetweenTargetAndOwnedPlanets(Planet target, boolean doWH) {
         double minimum_distance = Double.MAX_VALUE;
         int minimum_distance_id = 0;
+        int wormHoleId = -1;
+        int wormHoleSide = -1;
         for (int i = 0; i < planets_owned.size(); i++) {
-            if (isPlanetShielded(planets_owned.get(i)))  continue;
+            if (isPlanetShielded(planets_owned.get(i))) continue;
+            if(doWH){
+                for (int j = 0; j < Controll.wormHoles.size(); j++) {
+                    if(Controll.wormHoles.get(j).getId() != -1){
+                        Planet whA = new Planet();
+                        Planet whB = new Planet();
+                        whA.setX(Controll.wormHoles.get(j).getX());
+                        whA.setY(Controll.wormHoles.get(j).getY());
+                        whB.setX(Controll.wormHoles.get(j).getXb());
+                        whB.setY(Controll.wormHoles.get(j).getYb());
+                        double distance = planets_owned.get(i).distance(whA);
+                        distance += whB.distance(target);
+                        if (distance < minimum_distance) {
+                            minimum_distance = distance;
+                            minimum_distance_id = i;
+                            wormHoleId = Controll.wormHoles.get(j).getId();
+                            wormHoleSide = 0;
+                        }
+                        distance = planets_owned.get(i).distance(whB);
+                        distance += whA.distance(target);
+                        if (distance < minimum_distance) {
+                            minimum_distance = distance;
+                            minimum_distance_id = i;
+                            wormHoleId = Controll.wormHoles.get(j).getId();
+                            wormHoleSide = 1;
+                        }
+                    }
+                }
+            }
             double distance = planets_owned.get(i).distance(target);
             if (distance < minimum_distance) {
                 minimum_distance = distance;
                 minimum_distance_id = i;
             }
         }
-        return new Pair<>(minimum_distance, minimum_distance_id);
+        List<Integer> temp = new ArrayList<>();
+        temp.add(minimum_distance_id);
+        temp.add(wormHoleId);
+        temp.add(wormHoleSide);
+        return new Pair<>(minimum_distance, temp);
     }
 
     private static void findPointsInCircle() {

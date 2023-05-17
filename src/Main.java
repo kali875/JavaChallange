@@ -1,23 +1,14 @@
 import Bot.Controll;
-import GameData.OnGoingMBHShots;
-import GameData.Planets;
-import RestAPI.API.Send;
-import RestAPI.Model.Parameter;
-import RestAPI.Properties.Config;
 import RestAPI.Response.GameID;
 import Utils.ConnectionHandler;
-import Utils.ExistingGameIDParser;
 import Utils.GameWorldTableRenderer;
 import Utils.UILogger;
-import WebSocket.WebSocketCommunication;
 import challenge.game.model.Planet;
 import challenge.game.rest.GameKey;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import javax.websocket.DeploymentException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,11 +16,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +45,9 @@ public class Main
     private final ConnectionHandler connectionHandler = new ConnectionHandler();
     private JTable GameWorld;
     private JScrollPane JtableScroll;
+    private JTextField gameIDTextField;
+    private JButton connectButton;
+    private JTextField playerIDTextField;
     private GameID gameID;
     private GameKey game;
 
@@ -66,6 +56,19 @@ public class Main
     private final Controll controll = new Controll();
     public Main()
     {
+        createGameButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                connectionHandler.handleGameCreation(GameKeyTextField, gameIDTextField);
+            }
+        });
+
+        connectButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                connectionHandler.handleWebsocketConnection(playerIDTextField.getText(), GameKeyTextField.getText(), gameIDTextField.getText());
+            }
+        });
         startGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -81,7 +84,7 @@ public class Main
         GamePlace = new JPanel(null);
         GameWorld.setModel(GenerateWorld(112,63));
         JScrollPane pane = new JScrollPane(GameWorld);
-        JtableScroll.getViewport().add (GameWorld);
+        JtableScroll.getViewport().add(GameWorld);
         GameWorld.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         GameWorld.getColumnModel().getColumn(0).setPreferredWidth(5);
         SetWidth(GameWorld);
@@ -94,16 +97,19 @@ public class Main
 
         reconnectButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {connectionHandler.handleReconnect(GameKeyTextField);}
+            public void actionPerformed(ActionEvent e) {connectionHandler.handleReconnect(GameKeyTextField, gameIDTextField, playerIDTextField.getText(), GameKeyTextField.getText(), gameIDTextField.getText());}
         });
 
         emergencyStopButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {connectionHandler.handleEmergencyStop(GameKeyTextField);}
+            public void actionPerformed(ActionEvent e) {connectionHandler.handleEmergencyStop(GameKeyTextField, gameIDTextField);}
         });
         init();
-        logTextArea.setPreferredSize(new Dimension(200, Integer.MAX_VALUE));
-        //logTextArea.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
+        logTextArea.setPreferredSize(new Dimension(400, Integer.MAX_VALUE));
+
+        Random random = new Random();
+        int randomNumber = random.nextInt(99) + 1;
+        playerIDTextField.setText(String.valueOf(randomNumber));
     }
     public static void main(String[] args)
     {
