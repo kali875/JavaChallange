@@ -32,79 +32,17 @@ public class Controll
     public static List<GameAction> Commands = new ArrayList<GameAction>();
     public static List<challenge.game.model.WormHole> wormHoles = new ArrayList<>();
 
-    private static long shieldTimer = 0;
-    private static long lastShieldAttempt = 0;
-
     public static boolean gameStarted = false;
     public static int doingSomething = 0;
-    private static double whatToDoMultiplier = 2.75;
-    private static long inactivity_timer = 0;
-    private static long lastInactivityCheck = 0;
-    public static int DefAndAttackLimit;
-
-    static double UninhabitablePercentage = 0.3;
-
-    static int PlayerPlanetsAroundNumber = 0;
     boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.75;
-    public void StartStrategy()
-    {
+    private static DecisionHandler decisionHandler = new DecisionHandler();
 
-    }
-    public void ChangeStrategy()
-    {
-
-    }
-    void Controlling()
-    {
-        if (!isLateGamePhase)
-        {
-            /** EarlyGame**/
-            if(Planets.getPlanets_owned().size() > PlayerPlanetsAroundNumber)
-            {
-                /** We have around Planet number limit**/
-                //DefendAttack  First High priority enemyplanet
-                //DefAndAttackMethod()
-                if(Planets.getPlanets_owned().size() == DefAndAttackLimit)
-                {
-                    DefAndAttackMethod();
-                }
-                else
-                {
-                    /** double shooting and Def**/
-                    // double shooting and Def
-                }
-            }
-            else
-            {
-                //If have High EnemyDetected Planet Shoot
-                /** SpaceMission,ShootPlanet**/
-                //SpaceMission
-            }
-        }
-        else
-        {
-            /** LateGame**/
-            if(Planets.getPlanets_owned().size() >= DefAndAttackLimit)
-            {
-                /** double shooting and Def**/
-                // double shooting and Def
-            }
-            else if(Planets.getPlanets_owned().size() == DefAndAttackLimit)
-            {
-                DefAndAttackMethod();
-            }
-            else
-            {
-                /** little Planets number**/
-                // little shoot more def
-            }
-        }
-    }
     public static void onGameStarted(Game game_data) {
         game = game_data;
         InitialDataAnalysis initialDataAnalysis = new InitialDataAnalysis(game);
         List<Map.Entry<Planet, List<Planet>>> clusters = initialDataAnalysis.getClusters();
-        PlayerPlanetsAroundNumber = CalculatePlayerPlanets(Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size());
+        decisionHandler.CalculatePlayerPlanets(Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size());
+        decisionHandler.calculateDefAndAttackLimit(game);
         for (int i = 0; i < game.getSettings().getMaxWormHolesPerPlayer(); i++) {
             WormHole.sendWormHole(Planets.basePlanet.getX() + i + 1, Planets.basePlanet.getY() + i + 1,
                     clusters.get(i).getKey().getX(), clusters.get(i).getKey().getY());
@@ -117,13 +55,23 @@ public class Controll
             wh.setYb((int)clusters.get(i).getKey().getY() + i + 1);
             wormHoles.add(wh);
         }
-        for (int i = 0; i < game.getSettings().getMaxConcurrentActions(); i++)
-            doSomething();
+        for (int i = 0; i < game.getSettings().getMaxConcurrentActions() - game.getSettings().getMaxWormHolesPerPlayer(); i++)
+            decisionHandler.handle();
         System.out.println("Map size: height: " + game.getSettings().getHeight() + " - width: " + game.getSettings().getWidth());
+    }
+
+    private static void checkForActionStuck() {
+        // it is possible that handler waits for action replenishment but stuck and become passive
+        if (Actions.getRemainingActionCount() > 2 || (game.getSettings().getMaxConcurrentActions() <= 3 && Actions.getRemainingActionCount() > 1))
+            handleReplenishedAction();
     }
 
     public static void onGravityWaveCrossingActionEffect(GravityWaveCrossing actionEffect)
     {
+        if (!decisionHandler.isLateGamePhase())
+            if ((double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.75)
+                decisionHandler.reachedLateGamePhase();
+
         UILogger.log_string("Gravity Wave Crossing Action Effect happened :)");
         UILogger.log_string("Type: ");
         UILogger.log_actionEffectType_arraylist(actionEffect.getEffectChain());
@@ -143,11 +91,11 @@ public class Controll
 
         if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) {
             double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
-            //System.out.println(threshold);
             MyDataAnalysis.setFrequencyLimit((int) threshold);
             MyDataAnalysis.analData(actionEffect);
         };
-        checkInactivity();
+
+        checkForActionStuck();
     }
 
 
@@ -163,124 +111,15 @@ public class Controll
         if (actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_DESTROYED)
                 || actionEffect.getEffectChain().contains(ActionEffectType.SHIELD_TIMEOUT)
         ) {
-            Planets.planetsShielded.removeIf(p -> p.getId() == actionEffect.getAffectedMapObjectId());
-            shieldTimer = 0;
-            lastShieldAttempt = 0;
+            decisionHandler.resetShieldData(actionEffect.getAffectedMapObjectId());
         }
         if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) MyDataAnalysis.analData(actionEffect);
-        checkInactivity();
     }
 
-    private static void doneSomething() {
-        doingSomething--;
-        inactivity_timer = 0;
-        lastInactivityCheck = Calendar.getInstance().getTimeInMillis();
-    }
-
-    private static void checkInactivity() {
-        long timeNow = Calendar.getInstance().getTimeInMillis();
-        inactivity_timer = inactivity_timer + (timeNow - lastInactivityCheck);
-        lastInactivityCheck = timeNow;
-        if (inactivity_timer > game.getSettings().getPassivityTimeTreshold() * 0.3)
-            if (Actions.getRemainingActionCount() - doingSomething > 1) {
-                System.out.println("INACTIVITY! " + inactivity_timer);
-                inactivity_timer = 0;
-                lastInactivityCheck = Calendar.getInstance().getTimeInMillis();
-                doSomething();
-            }
-    }
-
-    public static void doSomething() {
-        doingSomething++;
-        if (Actions.getRemainingActionCount() < 1) {
-            doneSomething();
-            return;
-        }
-        if (Actions.getRemainingActionCount() == 1 && EnemyDataAnalysis.isThereEnemyWithHighChance()) {
-            doneSomething();
-            return;
-        }
-        if (Actions.getRemainingActionCount() > 1) {
-            Planet p = EnemyDataAnalysis.GetEnemyPlanet();
-            if (p != null) {
-                for (int i = 0; i < 2; i++) {
-                    Planet q = Planets.findClosestOwnedPlanetToTarget(p);
-                    if(q != null)
-                        Bot.MBH.sendMBH(q.getId(), p.getId());
-                }
-                UILogger.log_string("Possible Enemy planet shot! -> " + p.getId());
-                doneSomething();
-                return;
-            }
-        }
-        // Nincs 2 action fix pusztításhoz vagy nincs enemy planet
-        // megpróbál védekezni
-        if (shieldTimer <= 0 && Planets.planetsShielded.size() < 2) {
-            Planet endangeredPlanet = MyDataAnalysis.getDefPlanet();
-            if (endangeredPlanet != null) {
-                ErectShieldAction shieldAction = Shield.erectShield(endangeredPlanet);
-                if (shieldAction == null) {
-                    doingSomething--;
-                    System.out.println("0");
-                    return;
-                }
-                Planets.planetsShielded.add(endangeredPlanet);
-                shieldTimer = game.getSettings().getTimeToBuildShild() + game.getSettings().getShildDuration();
-                lastShieldAttempt = Calendar.getInstance().getTimeInMillis();
-                UILogger.log_string("Shield erected! -> " + endangeredPlanet.getId());
-                doneSomething();
-                return;
-            }
-        } else {
-            long timeNow = Calendar.getInstance().getTimeInMillis();
-            shieldTimer = shieldTimer - (timeNow - lastShieldAttempt);
-            lastShieldAttempt = timeNow;
-        }
-        // nem járt még le a pajzs vagy nincs még veszélyeztetett bolygó
-        // küldetés próbál küldeni
-        boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.8;
-        Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets(isLateGamePhase);
-        Pair<Pair<Double, Pair<Planet, Planet>>, List<Integer>> closestPlanetWH = Planets.findClosestPlanetsWH(isLateGamePhase);
-        if (closestPlanet != null) OnGoingMBHShots.possibleTarget(closestPlanet.getSecond().getSecond());
-        if (!isLateGamePhase) {
-            Pair<Double, Pair<Planet, Planet>> closestInhabitablePlanet = Planets.findClosestUnhabitablePlanet();
-            if (closestInhabitablePlanet != null) OnGoingMBHShots.possibleTarget(closestInhabitablePlanet.getSecond().getSecond());
-
-            if(closestPlanet != null && closestPlanetWH != null){
-                if (closestPlanet.getFirst() <= closestPlanetWH.getFirst().getFirst()) {
-                    Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
-                    UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
-                }else if(closestPlanetWH.getSecond().size() == 2){
-                    Bot.SpaceMission.sendSpaceMissionThroughWH(closestPlanetWH.getFirst().getSecond().getFirst(), closestPlanetWH.getFirst().getSecond().getSecond(), closestPlanetWH.getSecond().get(0), closestPlanetWH.getSecond().get(1));
-                    UILogger.log_string("Space Mission Wormhole Sent! -> " + closestPlanetWH.getFirst().getSecond().getSecond().getId());
-                }
-                doneSomething();
-                return;
-            }
-            if(closestInhabitablePlanet != null){
-                if (closestPlanet == null) {
-                    Bot.MBH.sendMBH(closestInhabitablePlanet.getSecond().getFirst().getId(), closestInhabitablePlanet.getSecond().getSecond().getId());
-                    OnGoingMBHShots.onShot(closestInhabitablePlanet.getSecond().getSecond());
-                    UILogger.log_string("Unhabitable planet shot! -> " + closestInhabitablePlanet.getSecond().getSecond().getId());
-                    doneSomething();
-                    return;
-                }
-                if (closestInhabitablePlanet.getFirst() * whatToDoMultiplier > closestPlanet.getFirst()) {
-                    Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
-                    UILogger.log_string("Space Mission Sent! -> " + closestPlanet.getSecond().getSecond().getId());
-                    doneSomething();
-                } else {
-                    Bot.MBH.sendMBH(closestInhabitablePlanet.getSecond().getFirst().getId(), closestInhabitablePlanet.getSecond().getSecond().getId());
-                    OnGoingMBHShots.onShot(closestInhabitablePlanet.getSecond().getSecond());
-                    UILogger.log_string("Inhabitable planet shot! -> " + closestInhabitablePlanet.getSecond().getSecond().getId());
-                    doneSomething();
-                }
-            }
-        } else if(closestPlanet != null){
-            Bot.MBH.sendMBH(closestPlanet.getSecond().getFirst().getId(), closestPlanet.getSecond().getSecond().getId());
-            UILogger.log_string("Unknown planet shot! -> " + closestPlanet.getSecond().getSecond().getId());
-            doneSomething();
-        }
+    public static void handleReplenishedAction() {
+        while (decisionHandler.isDecisionHandlerHandlingAnAction()) continue;
+        if (Actions.getRemainingActionCount() >= 1)
+            decisionHandler.handle();
     }
 
     public static double calculateScatterLimit(int totalPlanets, int numPlayers, int nonHabitablePlanets, int ownedPlanets, int destroyedPlanets)
@@ -363,36 +202,5 @@ public class Controll
     public static int normalizeValue(double value, double minValue, double maxValue, int normalizedMin, int normalizedMax) {
         double normalizedValue = ((value - minValue) / (maxValue - minValue)) * (normalizedMax - normalizedMin) + normalizedMin;
         return (int) Math.round(normalizedValue);
-    }
-    public void DefAndAttackMethod()
-    {
-        int idx = 0;
-        List<Planet> temp = new ArrayList<>();
-        temp.addAll(Planets.unhabitable_planets);
-        for (Planet Originplanet: Planets.getPlanets_owned())
-        {
-            if(!temp.isEmpty())
-            {
-                for (Planet TargetPlanet:temp)
-                {
-                    Bot.MBH.sendMBH(Originplanet.getId(),TargetPlanet.getId());
-                    Shield.erectShield(Originplanet);
-                    temp.remove(idx);
-                    idx++;
-                    temp.size();
-                    break;
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-    public static int CalculatePlayerPlanets(int totalPlanets, int numPlayers)
-    {
-        int inhabitablePlanets = (int) (totalPlanets * (1 - UninhabitablePercentage));
-        int playerPlanets = inhabitablePlanets / numPlayers;
-        return playerPlanets;
     }
 }
