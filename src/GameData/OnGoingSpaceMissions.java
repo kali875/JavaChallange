@@ -19,6 +19,11 @@ public class OnGoingSpaceMissions {
         missions.put(estimatedTime, new Pair<>(origin, target));
     }
 
+    public static void onSpaceMission(Planet origin, Planet target, Double distance) {
+        BigDecimal estimatedTime = BigDecimal.valueOf(Calendar.getInstance().getTimeInMillis()).add(BigDecimal.valueOf(2 * distance * Controll.game.getSettings().getTimeOfOneLightYear()));
+        missions.put(estimatedTime, new Pair<>(origin, target));
+    }
+
     public static Planet onActionReplenished(long time) {
         int minimum = Integer.MAX_VALUE;
         BigDecimal key = null;

@@ -116,7 +116,7 @@ public class Controll
 
     public static void handleReplenishedAction() {
         while (decisionHandler.isDecisionHandlerHandlingAnAction()) continue;
-        if (Actions.getRemainingActionCount() >= 1)
+        if (Actions.getRemainingActionCount() > 1)
             if (decisionHandler.getRequiredActionCountIfAny() <= Actions.getRemainingActionCount())
                 decisionHandler.handle();
     }

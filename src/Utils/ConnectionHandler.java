@@ -48,7 +48,10 @@ public class ConnectionHandler {
     private GameID createGame(JTextField gameIDTextField) {
         // csak azért kell, hogy a catchbe a ExistingGameIDParser tudja használni
         String responseBody = "";
-        GameID game_id = null;
+        GameID game_id = new GameID();
+        /*game_id.setGameId("MULTI_PLAYER");
+        gameIDTextField.setText(game_id.getGameId());
+        return game_id;*/
         try {
             Config conf = new Config();
 

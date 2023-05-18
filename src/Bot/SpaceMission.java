@@ -24,13 +24,12 @@ public class SpaceMission
 
     public SpaceMissionAction planSpaceMission() {
         Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets(false);
-        if (Controll.wormHoles.isEmpty()) return Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
         Pair<Pair<Double, Pair<Planet, Planet>>, List<Integer>> closestPlanetWH = Planets.findClosestPlanetsWH(false);
         if (closestPlanet == null && closestPlanetWH == null) throw new RuntimeException("There's no planet left to send a space mission...");
         if (closestPlanet.getFirst() <= closestPlanetWH.getFirst().getFirst()) {
             return Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
         } else if (closestPlanetWH.getSecond().size() == 2){
-            return Bot.SpaceMission.sendSpaceMissionThroughWH(closestPlanetWH.getFirst().getSecond().getFirst(), closestPlanetWH.getFirst().getSecond().getSecond(), closestPlanetWH.getSecond().get(0), closestPlanetWH.getSecond().get(1));
+            return Bot.SpaceMission.sendSpaceMissionThroughWH(closestPlanetWH.getFirst().getSecond().getFirst(), closestPlanetWH.getFirst().getSecond().getSecond(), closestPlanetWH.getSecond().get(0), closestPlanetWH.getSecond().get(1), closestPlanetWH.getFirst().getFirst());
         }
         throw new RuntimeException("Couldn't start the space mission, unexpected behaviour");
     }
@@ -49,7 +48,7 @@ public class SpaceMission
         return action;
     }
 
-    public static SpaceMissionAction sendSpaceMissionThroughWH(Planet originalPlanet, Planet targetPlanet, int wormHoleId, int epi) {
+    public static SpaceMissionAction sendSpaceMissionThroughWH(Planet originalPlanet, Planet targetPlanet, int wormHoleId, int epi, double distance) {
         Random random = new Random();
         int randomNumber = random.nextInt(89999) + 10000;
         SpaceMissionAction action = new SpaceMissionAction();
@@ -59,7 +58,7 @@ public class SpaceMission
         action.setWormHoleId(wormHoleId);
         action.setEntryPointIndex(epi == 0 ? EntryPointIndex.A : EntryPointIndex.B);
 
-        OnGoingSpaceMissions.onSpaceMission(originalPlanet, targetPlanet);
+        OnGoingSpaceMissions.onSpaceMission(originalPlanet, targetPlanet, distance);
         WebSocketCommunication.sendGameAction(action);
 
         return action;
