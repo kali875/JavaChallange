@@ -52,9 +52,11 @@ public class WebSocketCommunication
     public static void sendGameAction(GameAction gameAction) {
         try {
             String message = objectMapper.writeValueAsString(gameAction);
-            websocket_session.getAsyncRemote().sendText(message);
-            Actions.onActionUsed();
-            Controll.Commands.add(gameAction);
+            if (Actions.getRemainingActionCount() > 0) {
+                websocket_session.getAsyncRemote().sendText(message);
+                Actions.onActionUsed();
+                Controll.Commands.add(gameAction);
+            }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

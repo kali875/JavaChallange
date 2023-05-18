@@ -12,7 +12,6 @@ import org.glassfish.grizzly.utils.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class DecisionHandler {
     private final MBH mbh = new MBH();
@@ -28,11 +27,15 @@ public class DecisionHandler {
     private int PlayerPlanetsAroundNumber = 0;
 
     private boolean isActionHandled = false;
+    private int actionCountRequired = 0;
 
     public boolean isDecisionHandlerHandlingAnAction() {return isActionHandled;}
 
+    public int getRequiredActionCountIfAny() {return actionCountRequired;}
+
     public List<GameAction> handle() {
         isActionHandled = true;
+        setActionCountRequired(0);
         if (Actions.getRemainingActionCount() < 1) {
             isActionHandled = false;
             return null;
@@ -81,6 +84,10 @@ public class DecisionHandler {
                                 // "There's no planet left"
                                 // "There's no unhabitable planet left to shot on..."
                                 UILogger.log_string(e.toString());
+                                if (e.getMessage().equals("Not enough action point to shoot on possible enemy planet"))
+                                    if (Controll.game.getSettings().getMaxConcurrentActions() <= 3)
+                                        setActionCountRequired(1);
+                                    else setActionCountRequired(2);
                             }
                         } else {
                             // Returns so next time we will have enough action point to execute this
@@ -121,6 +128,8 @@ public class DecisionHandler {
                 } catch (RuntimeException e) {
                     // "There's no planet left to send a space mission..."
                     UILogger.log_string(e.toString());
+                    if (e.getMessage().equals("There's no planet left to send a space mission..."))
+                        reachedLateGamePhase();
                 }
             }
         }
@@ -180,6 +189,10 @@ public class DecisionHandler {
                 // "There's no planet left"
                 // "There's no unhabitable planet left to shot on..."
                 UILogger.log_string(e.toString());
+                if (e.getMessage().equals("Not enough action point to shoot on possible enemy planet"))
+                    if (Controll.game.getSettings().getMaxConcurrentActions() <= 3)
+                        setActionCountRequired(1);
+                    else setActionCountRequired(2);
             }
         }
 
@@ -207,6 +220,10 @@ public class DecisionHandler {
         DefAndAttackLimit = MyDataAnalysis.NecessaryPlanetNumber(game.getSettings().getTimeToBuildShild(),game.getSettings().getShildDuration(),game.getSettings().getMaxConcurrentActions());
     }
 
+    public void setActionCountRequired(int actionCountRequired) {
+        this.actionCountRequired = actionCountRequired;
+    }
+
     private List<GameAction> defAndAttack() {
         List<GameAction> actions = new ArrayList<>();
 
@@ -226,15 +243,17 @@ public class DecisionHandler {
             actions.add(mbh.sendMBH(queue_element.getFirst().getId(), queue_element.getSecond().getId()));
             OnGoingMBHShots.onShot(queue_element.getSecond());
             actions.add(shield.handleShield(queue_element.getFirst().getId()));
+
+            return actions;
         }
 
-        return actions;
+        return null;
     }
 
     private void getDefAndAttackMethodList()
     {
-        if (Planets.unhabitable_planets.isEmpty()) return;
-        for (Planet planet : Planets.unhabitable_planets) {
+        if (Planets.inhabitable_planets.isEmpty()) return;
+        for (Planet planet : Planets.inhabitable_planets) {
             Planet p = Planets.findClosestOwnedPlanetToTarget(planet);
             if (p == null) break;
             defAndAttackLimitList.add(new Pair<>(p, planet));

@@ -24,6 +24,7 @@ public class SpaceMission
 
     public SpaceMissionAction planSpaceMission() {
         Pair<Double, Pair<Planet, Planet>> closestPlanet = Planets.findClosestPlanets(false);
+        if (Controll.wormHoles.isEmpty()) return Bot.SpaceMission.sendSpaceMission(closestPlanet.getSecond().getFirst(), closestPlanet.getSecond().getSecond());
         Pair<Pair<Double, Pair<Planet, Planet>>, List<Integer>> closestPlanetWH = Planets.findClosestPlanetsWH(false);
         if (closestPlanet == null && closestPlanetWH == null) throw new RuntimeException("There's no planet left to send a space mission...");
         if (closestPlanet.getFirst() <= closestPlanetWH.getFirst().getFirst()) {

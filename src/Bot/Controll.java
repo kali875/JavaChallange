@@ -33,8 +33,6 @@ public class Controll
     public static List<challenge.game.model.WormHole> wormHoles = new ArrayList<>();
 
     public static boolean gameStarted = false;
-    public static int doingSomething = 0;
-    boolean isLateGamePhase = (double) Planets.destroyed_planets.size() / Planets.numberOfAllPlanets > 0.75;
     private static DecisionHandler decisionHandler = new DecisionHandler();
 
     public static void onGameStarted(Game game_data) {
@@ -90,7 +88,7 @@ public class Controll
             Planets.onPlanetDestroyed(actionEffect.getSourceId());
 
         if (actionEffect.getInflictingPlayer() == JavalessWonders.getCurrentPlayer().getId()) {
-            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.unhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
+            double threshold = calculateDefThreshold(((int) Controll.game.getWorld().getWidth()),(int)Controll.game.getWorld().getHeight(),Controll.game.getWorld().getPlanets().size(),Controll.game.getPlayers().size(),Planets.inhabitable_planets.size(),Planets.getPlanets_owned().size(),Controll.game.getWorld().getPlanets().size()- Planets.getPlanets().size(),Controll.game.getSettings().getPointsPerDerstroyedHostilePlanets());
             MyDataAnalysis.setFrequencyLimit((int) threshold);
             MyDataAnalysis.analData(actionEffect);
         };
@@ -119,7 +117,8 @@ public class Controll
     public static void handleReplenishedAction() {
         while (decisionHandler.isDecisionHandlerHandlingAnAction()) continue;
         if (Actions.getRemainingActionCount() >= 1)
-            decisionHandler.handle();
+            if (decisionHandler.getRequiredActionCountIfAny() <= Actions.getRemainingActionCount())
+                decisionHandler.handle();
     }
 
     public static double calculateScatterLimit(int totalPlanets, int numPlayers, int nonHabitablePlanets, int ownedPlanets, int destroyedPlanets)

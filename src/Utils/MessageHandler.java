@@ -35,6 +35,7 @@ public class MessageHandler {
             //Controll.onGameEvent(gameEvent);
 
             if (gameEvent.getEventType() == EventType.CONNECTION_RESULT) {
+                UILogger.log_string(message);
                 playerID = gameEvent.getConnectionResult().getPlayerId();
             } else if (gameEvent.getEventType() == EventType.GAME_STARTED) {
                 handleGameStarted(gameEvent.getGame());
@@ -116,7 +117,7 @@ public class MessageHandler {
                     Actions.onActionAttributeChange(newActionCount);
 
                     Controll.handleReplenishedAction();
-                }
+                } else Actions.onActionAttributeChange(newActionCount);
                 if (newActionCount == 0 && !Controll.gameStarted) Controll.gameStarted = true;
 
                 Planet target = OnGoingSpaceMissions.onActionReplenished(Calendar.getInstance().getTimeInMillis());
